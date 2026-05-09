@@ -1,0 +1,276 @@
+import os
+import time
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente
+load_dotenv()
+
+# Carrega o caminho do profile do Chrome via variável de ambiente ou usa um padrão
+CHROME_USER_DATA_DIR = os.getenv("CHROME_USER_DATA_DIR", r"C:\Temp\ChromeProfileFirefly")
+
+def ensure_logged_in(page):
+    print("[RPA Firefly] Verificando status de login na Adobe...")
+    did_login = False
+    try:
+        # Passo 1: Clicar no botão do perfil (cabeçalho)
+        profile_btn = page.locator("button[data-test-id='unav-profile--sign-in'], button.profile-comp").first
+        
+        try:
+            profile_btn.wait_for(state="visible", timeout=10000)
+            print("[RPA Firefly] Botão de perfil (Fazer logon) encontrado! Clicando...")
+            profile_btn.click()
+            page.wait_for_timeout(2000)
+            
+            # Passo 2: Insistir na procura do sp-link DENTRO DO IFRAME
+            print("[RPA Firefly] Procurando o link 'Fazer logon' dentro do iframe (sp-link#sign-in)...")
+            auth_iframe = page.frame_locator("susi-sentry iframe, iframe[src*='identity.adobe.com'], iframe#iframe").first
+            
+            menu_login_link = auth_iframe.locator("sp-link#sign-in").first
+            menu_login_link.wait_for(state="attached", timeout=60000)
+            page.wait_for_timeout(1000)
+            print("[RPA Firefly] Link 'Fazer logon' encontrado no iframe! Clicando e aguardando popup...")
+            
+            try:
+                with page.expect_popup(timeout=10000) as popup_info:
+                    menu_login_link.click(force=True)
+                login_context = popup_info.value
+                print("[RPA Firefly] Janela de Login (Popup) detectada com sucesso!")
+            except PlaywrightTimeoutError:
+                print("[RPA Firefly] Nenhum popup detectado. Assumindo redirecionamento na página principal...")
+                login_context = page
+            
+        except PlaywrightTimeoutError:
+            print("[RPA Firefly] Botão de perfil não encontrado em 10s. Provavelmente já logado.")
+            return False
+            
+        # Procura o input de email na janela correta (popup ou pagina principal)
+        print("[RPA Firefly] Procurando campo de email...")
+        email_input = login_context.locator("input#EmailPage-EmailField").first
+        email_input.wait_for(state="visible", timeout=20000)
+        
+        adobe_email = os.getenv("ADOBE_EMAIL")
+        if not adobe_email:
+            print("[RPA Firefly] Erro: ADOBE_EMAIL não está configurado no arquivo .env!")
+            return False
+            
+        print(f"[RPA Firefly] Tela de login detectada. Inserindo email...")
+        email_input.fill(adobe_email)
+        did_login = True
+        
+        # Botão Continuar
+        continue_btn = login_context.locator("button[data-id='EmailPage-ContinueButton']").first
+        if continue_btn.is_visible():
+            continue_btn.click()
+            
+        # Espera o campo de senha
+        password_input = login_context.locator("input[type='password'], input#PasswordPage-PasswordField").first
+        password_input.wait_for(state="visible", timeout=25000)
+        adobe_password = os.getenv("ADOBE_PASSWORD")
+        if not adobe_password:
+            print("[RPA Firefly] Erro: ADOBE_PASSWORD não está configurado no arquivo .env!")
+            return False
+            
+        print("[RPA Firefly] Inserindo senha...")
+        password_input.fill(adobe_password)
+        
+        # Botão Continuar (login)
+        pass_continue_btn = login_context.locator("button[data-id='PasswordPage-ContinueButton'], button[type='submit']").first
+        if pass_continue_btn.is_visible():
+            pass_continue_btn.click()
+            
+        # Aguarda a tela inicial carregar após o login
+        print("[RPA Firefly] Aguardando o processamento do login...")
+        page.wait_for_timeout(8000)
+        print("[RPA Firefly] Login automático concluído!")
+        
+    except Exception as e:
+        print(f"[RPA Firefly] Exceção na verificação de Login: {e}")
+        
+    return did_login
+
+def generate_image(prompt, output_path):
+    """
+    Usa o Playwright para gerar uma imagem no Adobe Firefly (Text-to-Image)
+    e baixa a imagem gerada para o output_path.
+    """
+    print(f"[RPA Firefly] Gerando Imagem para o prompt: '{prompt}'")
+    
+    with sync_playwright() as p:
+        # Iniciamos o Chrome com profile persistente para manter a sessão (login Adobe)
+        browser = p.chromium.launch_persistent_context(
+            user_data_dir=CHROME_USER_DATA_DIR,
+            headless=False, # Mantenha False durante o desenvolvimento para debugar os cliques
+            channel="chrome" # Usa o Chrome local instalado
+        )
+        
+        page = browser.new_page()
+        
+        try:
+            # Acesse a URL específica do gerador de imagem
+            url_imagem = "https://firefly.adobe.com/generate/image?sdid=SPVLLX6H&mv=search&mv2=paidsearch"
+            page.goto(url_imagem)
+            
+            # Garantir login automático
+            if ensure_logged_in(page):
+                print("[RPA Firefly] Retornando para a URL da imagem após o login...")
+                page.goto(url_imagem)
+                page.wait_for_timeout(3000)
+            
+            # Aguarde a página carregar (este seletor precisará de ajustes constantes)
+            # Dica: Use `playwright codegen https://firefly.adobe.com/generate/images`
+            print("[RPA Firefly] Aguardando o campo de prompt...")
+            
+            # Locator para o campo de texto. Firefly geralmente usa <textarea> ou <sp-textfield>
+            prompt_input = page.locator("textarea, sp-textfield").first
+            prompt_input.wait_for(state="visible", timeout=30000)
+            prompt_input.fill(prompt)
+            
+            print("[RPA Firefly] Selecionando o modelo GPT Image 2...")
+            try:
+                # O botão principal do picker de modelo
+                model_picker = page.locator("sp-picker#model, sp-picker[data-testid='firefly-picker-model']").first
+                if model_picker.is_visible():
+                    model_picker.click()
+                    page.wait_for_timeout(1000)
+                    
+                    # Seleciona o GPT Image 2 na lista de opções (Shadow DOM/Menu)
+                    gpt_model_option = page.locator("sp-menu-item[value='openai:firefly:colligo:gpt-image-2']").first
+                    gpt_model_option.click()
+                    page.wait_for_timeout(1000)
+                else:
+                    print("[RPA Firefly] Aviso: Seletor de modelo não está visível no momento.")
+            except Exception as e:
+                print(f"[RPA Firefly] Erro ao selecionar o modelo GPT Image 2: {e}")
+            
+            # Clicar no botão de gerar (Gerar em PT, Generate em EN)
+            generate_btn = page.locator("button:has-text('Gerar'), button:has-text('Generate'), sp-button:has-text('Gerar')").first
+            generate_btn.click()
+            
+            print("[RPA Firefly] Aguardando a geração da imagem (pode demorar)...")
+            # Espera aparecer imagens geradas, geralmente imagens cujo src inicia com blob: 
+            page.wait_for_selector("img[src^='blob:'], img.generated-image", timeout=180000)
+            
+            # Aguarda um tempinho para a renderização estabilizar
+            page.wait_for_timeout(2000)
+            
+            print("[RPA Firefly] Baixando a imagem...")
+            
+            # Fazer um hover na primeira imagem gerada, pois o botão de download pode estar escondido nela
+            first_img = page.locator("img[src^='blob:'], img.generated-image").first
+            if first_img.is_visible():
+                first_img.hover()
+                page.wait_for_timeout(1000)
+                
+            # Locator para o botão de Baixar / Download (mais robusto)
+            download_btn = page.locator("button[aria-label='Baixar'], button[aria-label='Download'], button[title='Baixar'], button[title='Download'], sp-action-button[aria-label='Baixar'], sp-action-button[aria-label='Download'], button:has-text('Baixar')").first
+            
+            download_btn.wait_for(state="attached", timeout=15000)
+            
+            with page.expect_download(timeout=180000) as download_info:
+                # Usa JavaScript para clicar no botão, driblando completamente bloqueios de visibilidade ("Element is not visible")
+                download_btn.evaluate("el => el.click()")
+                
+            download = download_info.value
+            download.save_as(output_path)
+            
+            print(f"[RPA Firefly] Imagem salva em: {output_path}")
+            
+        except PlaywrightTimeoutError:
+            print("[RPA Firefly] Erro de timeout: A página demorou muito a responder.")
+            raise
+        finally:
+            browser.close()
+            
+    return output_path
+
+def generate_video(image_path, prompt, output_path):
+    """
+    Usa o Playwright para gerar um vídeo no Adobe Firefly (Image-to-Video)
+    a partir da imagem base.
+    """
+    print(f"[RPA Firefly] Gerando Vídeo a partir da imagem: {image_path}")
+    
+    with sync_playwright() as p:
+        browser = p.chromium.launch_persistent_context(
+            user_data_dir=CHROME_USER_DATA_DIR,
+            headless=False,
+            channel="chrome"
+        )
+        
+        page = browser.new_page()
+        
+        try:
+            url_video = "https://firefly.adobe.com/generate/video?sdid=SPVLLX6H&mv=search&mv2=paidsearch"
+            page.goto(url_video)
+            
+            # Garantir login automático
+            if ensure_logged_in(page):
+                print("[RPA Firefly] Retornando para a URL do vídeo após o login...")
+                page.goto(url_video)
+                page.wait_for_timeout(3000)
+            
+            print("[RPA Firefly] Aguardando área de upload de vídeo...")
+            
+            # O upload no firefly normalmente se dá via um input hidden do tipo file
+            upload_input = page.locator("input[type='file']").first
+            upload_input.wait_for(state="attached", timeout=30000)
+            upload_input.set_input_files(image_path)
+            
+            # Aguarda o upload processar
+            page.wait_for_timeout(3000)
+            
+            if prompt:
+                # Locator do prompt de animação/movimento
+                video_prompt = page.locator("textarea, sp-textfield").first
+                video_prompt.fill(prompt)
+                
+            print("[RPA Firefly] Selecionando o modelo Runway Gen-4.5...")
+            try:
+                # O botão principal do picker de modelo
+                model_picker = page.locator("sp-picker#model, sp-picker[data-testid='firefly-picker-model']").first
+                if model_picker.is_visible():
+                    model_picker.click()
+                    page.wait_for_timeout(1000)
+                    
+                    # Seleciona o Runway Gen-4.5 na lista de opções
+                    runway_model_option = page.locator("sp-menu-item[value='ugs:video:runway@gen4.5']").first
+                    runway_model_option.click()
+                    page.wait_for_timeout(1000)
+                else:
+                    print("[RPA Firefly] Aviso: Seletor de modelo não está visível no momento.")
+            except Exception as e:
+                print(f"[RPA Firefly] Erro ao selecionar o modelo Runway Gen-4.5: {e}")
+                
+            generate_btn = page.locator("button:has-text('Gerar'), button:has-text('Generate'), sp-button:has-text('Gerar')").first
+            generate_btn.click()
+            
+            print("[RPA Firefly] Aguardando a geração do vídeo (pode demorar bastante)...")
+            # Espera pelo elemento de vídeo que confirma o resultado renderizado
+            page.wait_for_selector("video", timeout=360000)
+            
+            print("[RPA Firefly] Baixando o vídeo...")
+            download_btn = page.locator("button[aria-label='Baixar'], button[aria-label='Download'], button[title='Baixar'], button:has-text('Baixar')").first
+            
+            with page.expect_download(timeout=360000) as download_info:
+                download_btn.click()
+                
+            download = download_info.value
+            download.save_as(output_path)
+            
+            print(f"[RPA Firefly] Vídeo salvo em: {output_path}")
+            
+        except PlaywrightTimeoutError:
+            print("[RPA Firefly] Erro de timeout na geração de vídeo.")
+            raise
+        finally:
+            browser.close()
+            
+    return output_path
+
+if __name__ == "__main__":
+    # Teste isolado do RPA
+    print("Iniciando teste de automação web. Certifique-se de que o Chrome está fechado.")
+    img_out = "workspace/imagens_raw/test_image.jpg"
+    generate_image("A dark fantasy tavern", img_out)
+    generate_video(img_out, "Heavy rain and candle light", "workspace/videos_raw/test_video.mp4")

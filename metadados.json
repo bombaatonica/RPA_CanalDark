@@ -1,0 +1,366 @@
+{
+  "ep_001": {
+    "titulo": "Cursed Tavern in the Rain - 1 Hour Medieval Ambience",
+    "descricao": "Step Into The Shadows... Um reino esquecido onde cada vídeo representa um ambiente do mesmo universo narrativo. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "Dark medieval cursed tavern in the rain, cinematic lighting, photorealistic, 16:9",
+    "prompt_animacao": "Heavy rain falling, smoke coming from the chimney, subtle fire glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_002": {
+    "titulo": "Abandoned Dungeon Library - Dark Ambient Focus",
+    "descricao": "Lore of the abandoned dungeon library. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "Ancient dungeon library, dusty tomes, dark fantasy, dim candlelight, 16:9",
+    "prompt_animacao": "Dust particles floating, candle flickering gently",
+    "arquivo_audio": "dark_library_ambience.mp3"
+  },
+  "ep_003": {
+    "titulo": "Abandoned Medieval Castle In Endless Rain - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "abandoned medieval castle in endless rain, candles glowing through broken windows, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_004": {
+    "titulo": "Cursed Throne Room With Black Stone Walls And Dying Fireplace - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "cursed throne room with black stone walls and dying fireplace, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_005": {
+    "titulo": "Forgotten King'S Chamber Illuminated By Moonlight - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "forgotten king's chamber illuminated by moonlight, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_006": {
+    "titulo": "Gothic Fortress Hallway With Flickering Torches - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "gothic fortress hallway with flickering torches, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_007": {
+    "titulo": "Ruined Castle Tower During Thunderstorm - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "ruined castle tower during thunderstorm, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_008": {
+    "titulo": "Plague Kingdom Walls Covered In Mist - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "plague kingdom walls covered in mist, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_009": {
+    "titulo": "Ancient War Room With Medieval Maps And Candles - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "ancient war room with medieval maps and candles, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_010": {
+    "titulo": "Blood Moon Over Haunted Fortress - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "blood moon over haunted fortress, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_011": {
+    "titulo": "Dark Royal Library With Fireplace - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "dark royal library with fireplace, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_012": {
+    "titulo": "Destroyed Medieval Balcony Overlooking Dead Kingdom - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "destroyed medieval balcony overlooking dead kingdom, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_013": {
+    "titulo": "Gloomy Medieval Tavern Interior - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "gloomy medieval tavern interior, fireplace, rain on wooden windows, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_014": {
+    "titulo": "Lonely Tavern Table With Candle And Ale Mug - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "lonely tavern table with candle and ale mug, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_015": {
+    "titulo": "Mercenary Tavern After Battle - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "mercenary tavern after battle, smoky atmosphere, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_016": {
+    "titulo": "Old Northern Inn During Snowstorm - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "old northern inn during snowstorm, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_017": {
+    "titulo": "Medieval Pub With Shadows And Red Lanterns - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "medieval pub with shadows and red lanterns, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_018": {
+    "titulo": "Tavern For Exhausted Travelers In Storm - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "tavern for exhausted travelers in storm, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_019": {
+    "titulo": "Plague Tavern Almost Empty - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "plague tavern almost empty, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_020": {
+    "titulo": "Dark Inn With Hooded Strangers - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "dark inn with hooded strangers, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_021": {
+    "titulo": "Cursed Tavern With Raven On Table - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "cursed tavern with raven on table, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_022": {
+    "titulo": "Firelit Underground Tavern Hall - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "firelit underground tavern hall, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_023": {
+    "titulo": "Haunted Medieval Forest Covered In Blue Fog - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "haunted medieval forest covered in blue fog, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_024": {
+    "titulo": "Witch Forest With Dead Trees And Ravens - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "witch forest with dead trees and ravens, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_025": {
+    "titulo": "Moonlit Cursed Path In Dark Woods - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "moonlit cursed path in dark woods, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_026": {
+    "titulo": "Forbidden Forest Ruins - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "forbidden forest ruins, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_027": {
+    "titulo": "Foggy Forest Shrine - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "foggy forest shrine, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_028": {
+    "titulo": "Blood Moon Forest Camp - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "blood moon forest camp, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_029": {
+    "titulo": "Abandoned Hunter Cabin - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "abandoned hunter cabin, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_030": {
+    "titulo": "Medieval Cemetery Forest - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "medieval cemetery forest, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_031": {
+    "titulo": "Whispering Woods With Glowing Lantern - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "whispering woods with glowing lantern, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_032": {
+    "titulo": "Black Swamp Of Forgotten Souls - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "black swamp of forgotten souls, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_033": {
+    "titulo": "Ancient Gothic Cathedral Full Of Candles - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "ancient gothic cathedral full of candles, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_034": {
+    "titulo": "Ruined Abbey Under Rain - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "ruined abbey under rain, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_035": {
+    "titulo": "Plague Monastery With Long Empty Corridors - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "plague monastery with long empty corridors, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_036": {
+    "titulo": "Cursed Chapel With Stained Glass Moonlight - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "cursed chapel with stained glass moonlight, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_037": {
+    "titulo": "Dark Prayer Hall With Choir Atmosphere - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "dark prayer hall with choir atmosphere, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_038": {
+    "titulo": "Forbidden Crypt Entrance - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "forbidden crypt entrance, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_039": {
+    "titulo": "Abandoned Nun Sanctuary - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "abandoned nun sanctuary, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_040": {
+    "titulo": "Medieval Holy Library - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "medieval holy library, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_041": {
+    "titulo": "Haunted Bell Tower - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "haunted bell tower, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_042": {
+    "titulo": "Forgotten Underground Church - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "forgotten underground church, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_043": {
+    "titulo": "Knight Campfire In Battlefield Ruins - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "knight campfire in battlefield ruins, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_044": {
+    "titulo": "Blacksmith Forge In Midnight Storm - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "blacksmith forge in midnight storm, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_045": {
+    "titulo": "Necromancer Study Room - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "necromancer study room, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_046": {
+    "titulo": "Alchemist Tower - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "alchemist tower, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_047": {
+    "titulo": "Dungeon Prison Corridor - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "dungeon prison corridor, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_048": {
+    "titulo": "Medieval Harbor In Heavy Fog - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "medieval harbor in heavy fog, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_049": {
+    "titulo": "Throne Of Fallen Emperor - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "throne of fallen emperor, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_050": {
+    "titulo": "Snowy Fortress Gate - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "snowy fortress gate, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_051": {
+    "titulo": "Dark Wizard Chamber - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "dark wizard chamber, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  },
+  "ep_052": {
+    "titulo": "Candlelit Map Room Of War - Dark Ambient Focus",
+    "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
+    "prompt_imagem": "candlelit map room of war, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
+    "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+  }
+}

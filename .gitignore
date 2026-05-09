@@ -1,0 +1,30 @@
+# Variáveis de Ambiente / Credenciais
+.env
+
+# Python / Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Ambientes Virtuais
+venv/
+env/
+.venv/
+
+# Pastas de Trabalho / Arquivos Pesados
+workspace/imagens_raw/*
+!workspace/imagens_raw/.gitkeep
+workspace/videos_raw/*
+!workspace/videos_raw/.gitkeep
+workspace/processamento/*
+!workspace/processamento/.gitkeep
+output/*
+!output/.gitkeep
+assets/musicas/*
+!assets/musicas/.gitkeep
+
+# Arquivos locais / Logs
+playwright-report/
+test-results/
+*.log
