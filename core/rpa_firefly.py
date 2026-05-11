@@ -123,24 +123,27 @@ def generate_image(prompt, output_path):
             print("[RPA Firefly] Aguardando o campo de prompt...")
             
             # Locator para o campo de texto. Firefly geralmente usa <textarea> ou <sp-textfield>
-            prompt_input = page.locator("textarea, sp-textfield").first
+            # Usando click + insert_text para contornar erro de <sp-textfield> (Web Component) não ser um input nativo
+            prompt_input = page.locator("firefly-textfield#prompt-input, textarea[aria-label='Prompt'], sp-textfield#prompt-input").first
             prompt_input.wait_for(state="visible", timeout=30000)
-            prompt_input.fill(prompt)
+            prompt_input.click()
+            page.keyboard.insert_text(prompt)
             
             print("[RPA Firefly] Selecionando o modelo GPT Image 2...")
             try:
                 # O botão principal do picker de modelo
                 model_picker = page.locator("sp-picker#model, sp-picker[data-testid='firefly-picker-model']").first
-                if model_picker.is_visible():
-                    model_picker.click()
-                    page.wait_for_timeout(1000)
-                    
-                    # Seleciona o GPT Image 2 na lista de opções (Shadow DOM/Menu)
-                    gpt_model_option = page.locator("sp-menu-item[value='openai:firefly:colligo:gpt-image-2']").first
-                    gpt_model_option.click()
-                    page.wait_for_timeout(1000)
-                else:
-                    print("[RPA Firefly] Aviso: Seletor de modelo não está visível no momento.")
+                model_picker.wait_for(state="visible", timeout=30000)
+                
+                # Clica para abrir
+                model_picker.click()
+                page.wait_for_timeout(1000)
+                
+                # Seleciona o GPT Image 2 na lista de opções (Shadow DOM/Menu) usando evaluate para driblar camadas sobrepostas
+                gpt_model_option = page.locator("sp-menu-item[value='openai:firefly:colligo:gpt-image-2']").first
+                gpt_model_option.wait_for(state="attached", timeout=10000)
+                gpt_model_option.evaluate("el => el.click()")
+                page.wait_for_timeout(1000)
             except Exception as e:
                 print(f"[RPA Firefly] Erro ao selecionar o modelo GPT Image 2: {e}")
             
@@ -253,23 +256,26 @@ def generate_video(image_path, prompt, output_path):
             
             if prompt:
                 # Locator do prompt de animação/movimento
-                video_prompt = page.locator("textarea, sp-textfield").first
-                video_prompt.fill(prompt)
+                # Usamos click() + insert_text() porque sp-textfield é um Web Component e .fill() pode falhar
+                video_prompt = page.locator("firefly-textfield#prompt-input, textarea[aria-label='Prompt'], sp-textfield#prompt-input").first
+                video_prompt.click()
+                page.keyboard.insert_text(prompt)
                 
             print("[RPA Firefly] Selecionando o modelo Runway Gen-4.5...")
             try:
-                # O botão principal do picker de modelo
+                # O botão principal do picker de modelo (aguarda ele aparecer após o upload)
                 model_picker = page.locator("sp-picker#model, sp-picker[data-testid='firefly-picker-model']").first
-                if model_picker.is_visible():
-                    model_picker.click()
-                    page.wait_for_timeout(1000)
-                    
-                    # Seleciona o Runway Gen-4.5 na lista de opções
-                    runway_model_option = page.locator("sp-menu-item[value='ugs:video:runway@gen4.5']").first
-                    runway_model_option.click()
-                    page.wait_for_timeout(1000)
-                else:
-                    print("[RPA Firefly] Aviso: Seletor de modelo não está visível no momento.")
+                model_picker.wait_for(state="visible", timeout=30000)
+                
+                # Abre o dropdown
+                model_picker.click()
+                page.wait_for_timeout(1500)
+                
+                # Seleciona o Runway Gen-4.5 na lista de opções usando evaluate para garantir o clique
+                runway_model_option = page.locator("sp-menu-item[value='ugs:video:runway@gen4.5']").first
+                runway_model_option.wait_for(state="attached", timeout=10000)
+                runway_model_option.evaluate("el => el.click()")
+                page.wait_for_timeout(1000)
             except Exception as e:
                 print(f"[RPA Firefly] Erro ao selecionar o modelo Runway Gen-4.5: {e}")
                 
