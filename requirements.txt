@@ -1,3 +1,4 @@
 playwright
 ffmpeg-python
 python-dotenv
+Pillow

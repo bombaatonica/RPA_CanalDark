@@ -192,6 +192,21 @@ def generate_image(prompt, output_path):
             
             print(f"[RPA Firefly] Imagem salva em: {output_path}")
             
+            # Remove metadados (Content Credentials / C2PA) da imagem para que a Adobe
+            # permita usá-la no gerador de "Image to Video".
+            try:
+                from PIL import Image
+                img = Image.open(output_path)
+                
+                # Criar um novo arquivo em branco e "colar" os pixels nele apaga totalmente 
+                # qualquer metadado oculto da Adobe na imagem original.
+                clean_img = Image.new(img.mode, img.size)
+                clean_img.paste(img)
+                clean_img.save(output_path)
+                print("[RPA Firefly] Credenciais de Conteúdo limpas com sucesso!")
+            except Exception as e:
+                print(f"[RPA Firefly] Aviso: Falha ao limpar metadados da imagem: {e}")
+                
         except PlaywrightTimeoutError:
             print("[RPA Firefly] Erro de timeout: A página demorou muito a responder.")
             raise
