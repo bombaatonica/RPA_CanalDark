@@ -23,11 +23,12 @@ def main():
         
         # Fase 2: Geração de Imagem (Text-to-Image)
         print("\n>>> Fase 2: Gerando Imagem Base no Firefly")
-        rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
+        # rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
+        print("[Teste] Geração de imagem pulada para economizar créditos.")
         
         # Fase 3: Geração de Vídeo (Image-to-Video)
         print("\n>>> Fase 3: Gerando Animação no Firefly")
-        rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
+        rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path, skip_generation=True)
         
         # Fase 4: Engenharia de Vídeo e Renderização
         print("\n>>> Fase 4: Montando o Episódio Final (FFmpeg)")
