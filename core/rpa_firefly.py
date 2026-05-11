@@ -101,7 +101,8 @@ def generate_image(prompt, output_path):
         browser = p.chromium.launch_persistent_context(
             user_data_dir=CHROME_USER_DATA_DIR,
             headless=False, # Mantenha False durante o desenvolvimento para debugar os cliques
-            channel="chrome" # Usa o Chrome local instalado
+            channel="chrome", # Usa o Chrome local instalado
+            args=["--disable-extensions", "--disable-background-networking"] # Evita processos fantasmas de extensões rodando no fundo
         )
         
         page = browser.new_page()
@@ -145,31 +146,46 @@ def generate_image(prompt, output_path):
             
             # Clicar no botão de gerar (Gerar em PT, Generate em EN)
             generate_btn = page.locator("button:has-text('Gerar'), button:has-text('Generate'), sp-button:has-text('Gerar')").first
+            # Pega o link da imagem anterior para não baixar a mesma de novo
+            old_src = page.evaluate('''() => {
+                const img = document.querySelector("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']");
+                return img ? img.src : "";
+            }''')
+            
             generate_btn.click()
             
-            print("[RPA Firefly] Aguardando a geração da imagem (pode demorar)...")
-            # Espera aparecer imagens geradas, geralmente imagens cujo src inicia com blob: 
-            page.wait_for_selector("img[src^='blob:'], img.generated-image", timeout=180000)
+            print("[RPA Firefly] Aguardando a geração da nova imagem (pode demorar)...")
+            
+            # Espera até que o Firefly coloque uma nova imagem na tela
+            if old_src:
+                page.wait_for_function(f'''() => {{
+                    const imgs = Array.from(document.querySelectorAll("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']"));
+                    return imgs.some(img => img.src && img.src.startsWith('blob:') && img.src !== "{old_src}");
+                }}''', timeout=180000)
+            else:
+                page.wait_for_selector("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']", timeout=180000)
+            
+            # Garante que o container já apareceu
+            grid = page.locator("div[data-testid='collapsible-batch-grid-content'], firefly-image-generation-image-variation").first
+            grid.wait_for(state="visible", timeout=30000)
             
             # Aguarda um tempinho para a renderização estabilizar
             page.wait_for_timeout(2000)
             
             print("[RPA Firefly] Baixando a imagem...")
             
-            # Fazer um hover na primeira imagem gerada, pois o botão de download pode estar escondido nela
-            first_img = page.locator("img[src^='blob:'], img.generated-image").first
-            if first_img.is_visible():
-                first_img.hover()
-                page.wait_for_timeout(1000)
+            # Localiza o primeiro container da imagem gerada e faz o hover para exibir os botões
+            variation = grid.locator("firefly-image-generation-image-variation").first
+            variation.hover()
+            page.wait_for_timeout(1000)
                 
-            # Locator para o botão de Baixar / Download (mais robusto)
-            download_btn = page.locator("button[aria-label='Baixar'], button[aria-label='Download'], button[title='Baixar'], button[title='Download'], sp-action-button[aria-label='Baixar'], sp-action-button[aria-label='Download'], button:has-text('Baixar')").first
-            
-            download_btn.wait_for(state="attached", timeout=15000)
+            # O botão de Baixar específico deste batch que aparece no hover
+            download_btn = variation.locator("sp-action-button[data-testid='thumbnail-button-download']").first
+            download_btn.wait_for(state="visible", timeout=15000)
             
             with page.expect_download(timeout=180000) as download_info:
-                # Usa JavaScript para clicar no botão, driblando completamente bloqueios de visibilidade ("Element is not visible")
-                download_btn.evaluate("el => el.click()")
+                # Agora que o botão está visível pelo hover, o click normal disparará os eventos ponteiro corretos do Web Component
+                download_btn.click()
                 
             download = download_info.value
             download.save_as(output_path)
