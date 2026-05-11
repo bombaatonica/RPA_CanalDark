@@ -169,7 +169,8 @@ def generate_image(prompt, output_path):
                 page.wait_for_selector("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']", timeout=180000)
             
             # Garante que o container já apareceu
-            grid = page.locator("div[data-testid='collapsible-batch-grid-content'], firefly-image-generation-image-variation").first
+            # Usa .last pois as novas gerações são adicionadas no final da página/chat
+            grid = page.locator("div[data-testid='collapsible-batch-grid-content'], firefly-image-generation-image-variation").last
             grid.wait_for(state="visible", timeout=30000)
             
             # Aguarda um tempinho para a renderização estabilizar
@@ -177,7 +178,7 @@ def generate_image(prompt, output_path):
             
             print("[RPA Firefly] Baixando a imagem...")
             
-            # Localiza o primeiro container da imagem gerada e faz o hover para exibir os botões
+            # Localiza o primeiro container da imagem gerada DENTRO deste último batch e faz o hover para exibir os botões
             variation = grid.locator("firefly-image-generation-image-variation").first
             variation.hover()
             page.wait_for_timeout(1000)
@@ -311,8 +312,9 @@ def generate_video(image_path, prompt, output_path, skip_generation=False):
             
             print("[RPA Firefly] Geração concluída! Baixando o vídeo...")
             with page.expect_download(timeout=120000) as download_info:
-                # Dispara o clique usando evaluate para garantir que Web Components não bloqueiem o Pointer Event
-                download_btn.evaluate("el => el.click()")
+                # O botão real fica DENTRO do shadow dom do <firefly-media-timeline-download-button>
+                # O Playwright faz isso nativamente com o clique simulado, o evaluate javascript as vezes falha nisso.
+                download_btn.click(force=True)
                 
             download = download_info.value
             download.save_as(output_path)

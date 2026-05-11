@@ -18,17 +18,17 @@ def main():
         # Caminhos dos arquivos
         img_out_path = f"workspace/imagens_raw/{episode_id}_base.jpg"
         vid_out_path = f"workspace/videos_raw/{episode_id}_anim.mp4"
-        audio_path = f"assets/musicas/{metadata['arquivo_audio']}"
+        # O caminho do áudio já vem completo do metadado gerado
+        audio_path = metadata['arquivo_audio']
         final_out_path = f"output/obsidian_{episode_id}.mp4"
         
         # Fase 2: Geração de Imagem (Text-to-Image)
         print("\n>>> Fase 2: Gerando Imagem Base no Firefly")
-        # rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
-        print("[Teste] Geração de imagem pulada para economizar créditos.")
+        rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
         
         # Fase 3: Geração de Vídeo (Image-to-Video)
         print("\n>>> Fase 3: Gerando Animação no Firefly")
-        rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path, skip_generation=True)
+        rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
         
         # Fase 4: Engenharia de Vídeo e Renderização
         print("\n>>> Fase 4: Montando o Episódio Final (FFmpeg)")
