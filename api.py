@@ -530,22 +530,24 @@ def _upload_to_youtube(ep_id: str, video_path: str, title: str,
     try:
         youtube = _build_yt_service()
 
-        # Bloco de Tags SEO solicitado pelo usuário (formatado como hashtags)
-        seo_tags_block = (
-            "#darkfantasy #ambience #gothicfantasy #music #medievalambience\n"
-            "#darkambient #fantasysleepmusic #cathedralambience #dungeonsynth\n"
-            "#medievalmusic #studying #reading #darkcathedral #rainambience\n"
-            "#RPG #backgroundmusic #hauntedcathedral #sleepmusic\n"
-            "#gothicambience #ObsidianRealm"
-        )
+        # Essas vão para a aba "Tags" (Keywords) internas do YouTube
+        fixed_tags = [
+            "dark fantasy", "ambience", "gothic fantasy", "music", "medieval ambience",
+            "dark ambient", "fantasy sleep music", "cathedral ambience", "dungeon synth",
+            "medieval music", "studying", "reading", "dark cathedral", "rain ambience",
+            "RPG", "background music", "haunted cathedral", "sleep music",
+            "gothic ambience", "Obsidian Realm"
+        ]
         
-        full_description = f"{description}{seo_tags_block}"
+        # Converte as tags inseridas no modal em hashtags para a descrição
+        user_hashtags = " ".join([f"#{t.strip().replace(' ', '')}" for t in tags if t.strip()])
+        full_description = f"{description}\n\n{user_hashtags}"
 
         body = {
             "snippet": {
                 "title": title,
                 "description": full_description,
-                "tags": tags,
+                "tags": fixed_tags,
                 "categoryId": category_id,
                 "defaultLanguage": "pt"
             },
