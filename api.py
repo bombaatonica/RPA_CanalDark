@@ -532,7 +532,6 @@ def _upload_to_youtube(ep_id: str, video_path: str, title: str,
 
         # Bloco de Tags SEO solicitado pelo usuário (formatado como hashtags)
         seo_tags_block = (
-            "\n\n🔥 TAGS SEO\n"
             "#darkfantasy #ambience #gothicfantasy #music #medievalambience\n"
             "#darkambient #fantasysleepmusic #cathedralambience #dungeonsynth\n"
             "#medievalmusic #studying #reading #darkcathedral #rainambience\n"
