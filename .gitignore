@@ -1,5 +1,7 @@
 # Variáveis de Ambiente / Credenciais
 .env
+client_secrets.json
+token.json
 
 # Python / Cache
 __pycache__/
