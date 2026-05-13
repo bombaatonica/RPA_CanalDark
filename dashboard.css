@@ -247,7 +247,7 @@ body {
 /* Column headers */
 .col-headers {
   display: grid;
-  grid-template-columns: 70px 1fr 1fr 1fr 130px;
+  grid-template-columns: 70px 1.2fr 1fr 1fr 1fr;
   gap: 12px;
   padding: 12px 16px;
   margin-top: 16px;
@@ -291,7 +291,7 @@ body {
 /* ---- EPISODE ROW ---- */
 .ep-row {
   display: grid;
-  grid-template-columns: 70px 1fr 1fr 1fr 130px;
+  grid-template-columns: 70px 1.2fr 1fr 1fr 1fr;
   gap: 12px;
   align-items: start;
   padding: 14px 16px;
@@ -720,4 +720,111 @@ body {
   background: linear-gradient(90deg, #e05a5a, #c94a4a);
   border-radius: 99px;
   transition: width 0.5s ease;
+}
+
+/* =============================================
+   DOWNLOAD AUDIO PROGRESS BAR
+   ============================================= */
+.dl-progress-wrap {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.dl-progress-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.4s ease;
+}
+.dl-progress-bar.success { background: linear-gradient(90deg, var(--green), #2eb87a); }
+.dl-progress-bar.error   { background: var(--red); }
+
+.dl-progress-meta {
+  font-size: 0.68rem;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+  min-height: 14px;
+}
+
+/* =============================================
+   PIPELINE PROGRESS BAR (Episode Row)
+   ============================================= */
+.pipeline-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(124,92,191,0.08);
+  border: 1px solid rgba(124,92,191,0.2);
+  border-radius: 8px;
+}
+.pipeline-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini-spin-inline {
+  width: 9px; height: 9px;
+  border: 1.5px solid var(--accent2);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+.pipeline-phase-text {
+  font-size: 0.68rem;
+  color: var(--accent2);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pipeline-pct {
+  font-size: 0.68rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent2);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.pipeline-bar-track {
+  height: 4px;
+  background: rgba(124,92,191,0.15);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.pipeline-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 99px;
+  transition: width 0.6s ease;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* =============================================
+   AUDIO ROW MINI PROGRESS BAR
+   ============================================= */
+.audio-mini-bar-wrap {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  width: 100%;
+}
+.audio-mini-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.audio-mini-meta {
+  font-size: 0.65rem;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  display: block;
 }

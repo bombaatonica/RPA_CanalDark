@@ -12,7 +12,8 @@ let selectedDuration = 60;
 let pendingEpId = null;      // para modal de geração
 let pendingAudioEpId = null; // para modal de áudio
 let pendingYtEpId = null;    // para modal youtube
-let pollIntervals = {};       // polling por ep_id
+let pollIntervals = {};          // pipeline polling por ep_id
+let audioDownloadPollers = {};   // audio download polling por ep_id
 
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded', () => {
@@ -90,6 +91,7 @@ async function loadEpisodes() {
     // Inicia polling para episódios que estão rodando
     allEpisodes.forEach(ep => {
       if (ep.pipeline_running) startPolling(ep.id);
+      if (ep.audio_download_running) startAudioPolling(ep.id);
     });
   } catch (e) {
     list.innerHTML = `
@@ -137,33 +139,75 @@ function renderEpRow(ep) {
       ? `<span class="status-chip raw">⬡ Raw</span>`
       : `<span class="status-chip pending">◌ Pendente</span>`;
 
-  const audioChip = ep.audio_exists
-    ? `<span class="audio-chip">♪ ${shortPath(ep.arquivo_audio)}</span>`
-    : `<span class="audio-chip missing">✗ Sem áudio</span>`;
+  const audioChip = ep.audio_download_running
+    ? `<span class="audio-chip downloading">⧳ ${ep.audio_download_phase || 'Baixando...'}</span>`
+    : ep.audio_exists
+      ? `<span class="audio-chip">♪ ${shortPath(ep.arquivo_audio)}</span>`
+      : `<span class="audio-chip missing">✗ Sem áudio</span>`;
 
-  const rawVideoHtml = ep.raw_video_exists
+  const audioMiniBar = ep.audio_download_running
+    ? `<div class="audio-mini-bar-wrap">
+         <div class="audio-mini-bar-fill" style="width:${ep.audio_download_progress || 0}%"></div>
+       </div>
+       <span class="audio-mini-meta">${[ep.audio_download_speed, ep.audio_download_eta ? `ETA ${ep.audio_download_eta}` : ''].filter(Boolean).join(' · ')}</span>`
+    : '';
+
+  const isRunning = ep.pipeline_running;
+
+  const progressHtml = isRunning
+    ? `<div class="pipeline-progress-wrap" style="margin-top: 8px;">
+         <div class="pipeline-progress-header">
+           <span class="mini-spin-inline"></span>
+           <span class="pipeline-phase-text">${ep.pipeline_phase || 'Processando...'}</span>
+           <span class="pipeline-pct">${ep.pipeline_progress || 0}%</span>
+         </div>
+         <div class="pipeline-bar-track">
+           <div class="pipeline-bar-fill" style="width:${ep.pipeline_progress || 0}%"></div>
+         </div>
+       </div>`
+    : (ep.pipeline_error ? `<div class="phase-badge error" style="margin-top: 8px;">✗ ${ep.pipeline_error}</div>` : '');
+
+  const btnCancel = isRunning 
+    ? `<button class="btn btn-danger btn-sm" style="margin-top:8px; width:100%" onclick="cancelPipeline('${ep.id}')">🛑 Cancelar Processo</button>` 
+    : '';
+
+  const editBtn = `<button class="btn btn-ghost btn-sm" style="margin-top:8px; width:100%" onclick="openEditEpisode('${ep.id}')">✏️ Editar Prompts</button>`;
+
+  // Imagem Base
+  const rawImageHtml = ep.raw_image_exists
     ? `<div class="video-preview">
-         <video src="${ep.raw_video_url}" muted playsinline
+         <img src="${ep.raw_image_url}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;" />
+       </div>
+       <span class="vid-meta">${ep.raw_image_size_mb} MB</span>`
+    : `<div class="video-preview">
+         <div class="no-video">
+           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+           <span>Sem imagem</span>
+         </div>
+       </div>
+       <span class="vid-meta prompt" title="${ep.prompt_imagem}">${ep.prompt_imagem || 'Sem prompt'}</span>`;
+
+  // Vídeo Raw
+  const rawVideoHtml = (ep.raw_video_exists && !isRunning)
+    ? `<div class="video-preview">
+         <video src="${ep.raw_video_url}?t=${Date.now()}" muted playsinline
                 onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0;"></video>
        </div>
        <span class="vid-meta">${ep.raw_video_size_mb} MB</span>`
-    : ep.pipeline_running
-      ? `<div class="phase-badge"><span class="mini-spin"></span>${ep.pipeline_phase || 'Processando...'}</div>`
-      : ep.pipeline_error
-        ? `<div class="phase-badge error">✗ ${ep.pipeline_error}</div>`
-        : `<div class="video-preview">
-             <div class="no-video">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                 <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>
-               </svg>
-               <span>Nenhum vídeo raw</span>
-             </div>
-           </div>
-           <span class="vid-meta">${ep.prompt_animacao}</span>`;
+    : `<div class="video-preview">
+         <div class="no-video">
+           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>
+           </svg>
+           <span>${isRunning ? 'Processando...' : 'Nenhum vídeo raw'}</span>
+         </div>
+       </div>
+       <span class="vid-meta prompt" title="${ep.prompt_animacao}">${ep.prompt_animacao || 'Sem prompt'}</span>`;
 
-  const finalVideoHtml = ep.final_video_exists
+  // Vídeo Final
+  const finalVideoHtml = (ep.final_video_exists && !isRunning)
     ? `<div class="video-preview">
-         <video src="${ep.final_video_url}" muted playsinline
+         <video src="${ep.final_video_url}?t=${Date.now()}" muted playsinline
                 onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0;"></video>
        </div>
        <span class="vid-meta">${ep.final_video_size_mb} MB</span>`
@@ -172,25 +216,17 @@ function renderEpRow(ep) {
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
            </svg>
-           <span>Aguardando pipeline</span>
+           <span>${isRunning ? 'Em processamento...' : 'Aguardando render'}</span>
          </div>
        </div>`;
 
-  const generateBtn = ep.pipeline_running
-    ? `<button class="btn btn-ghost btn-sm" disabled style="opacity:0.5;cursor:not-allowed;">⟳ Rodando...</button>`
-    : `<button class="btn btn-primary btn-sm" onclick="openConfirmGenerate('${ep.id}')">
-         ▶ Gerar Vídeo
-       </button>`;
+  const btnImg = isRunning ? '' : `<button class="btn btn-primary btn-sm" style="margin-top:4px; width:100%" onclick="openConfirmGenerate('${ep.id}', 'image')">🎨 Gerar Foto</button>`;
+  const btnVid = isRunning ? '' : `<button class="btn btn-primary btn-sm" style="margin-top:4px; width:100%" onclick="openConfirmGenerate('${ep.id}', 'video')">🎬 Gerar Vídeo</button>`;
+  const btnFinal = isRunning ? '' : `<button class="btn btn-primary btn-sm" style="margin-top:4px; width:100%" onclick="openConfirmGenerate('${ep.id}', 'final')">⚙️ Renderizar Final</button>`;
 
-  const ytBtn = ep.final_video_exists
-    ? `<button class="btn btn-ghost btn-sm" onclick="openYoutube('${ep.id}')">
-         📅 Agendar YT
-       </button>`
+  const ytBtn = (!isRunning && ep.final_video_exists)
+    ? `<button class="btn btn-ghost btn-sm" style="margin-top:4px; width:100%" onclick="openYoutube('${ep.id}')">📅 Agendar YT</button>`
     : '';
-
-  const editBtn = `<button class="btn btn-ghost btn-sm" onclick="openEditEpisode('${ep.id}')">
-    ✏ Prompts
-  </button>`;
 
   return `
   <div class="ep-row${ep.pipeline_running ? ' running' : ''}" id="row-${ep.id}">
@@ -200,10 +236,11 @@ function renderEpRow(ep) {
       ${statusChip}
     </div>
 
-    <!-- Col: Áudio -->
+    <!-- Col: Áudio e Status Geral -->
     <div class="ep-cell audio-cell">
       <span class="ep-title">${ep.titulo}</span>
       ${audioChip}
+      ${audioMiniBar}
       <div class="audio-url-display" onclick="openAudioModal('${ep.id}')" title="Clique para definir URL do áudio">
         <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -211,21 +248,58 @@ function renderEpRow(ep) {
         </svg>
         <span class="audio-url-text">${ep.arquivo_audio || 'Definir URL do YouTube...'}</span>
       </div>
+      ${editBtn}
+      ${progressHtml}
+      ${btnCancel}
+    </div>
+
+    <!-- Col: Imagem Base -->
+    <div class="ep-cell">
+      ${rawImageHtml}
+      ${btnImg}
     </div>
 
     <!-- Col: Raw Video -->
-    <div class="ep-cell">${rawVideoHtml}</div>
+    <div class="ep-cell">
+      ${rawVideoHtml}
+      ${btnVid}
+    </div>
 
     <!-- Col: Final Video -->
-    <div class="ep-cell">${finalVideoHtml}</div>
-
-    <!-- Col: Actions -->
-    <div class="ep-actions">
-      ${generateBtn}
-      ${editBtn}
+    <div class="ep-cell">
+      ${finalVideoHtml}
+      ${btnFinal}
       ${ytBtn}
     </div>
   </div>`;
+}
+
+async function cancelPipeline(epId) {
+  if (!confirm(`Deseja realmente cancelar a pipeline do episódio ${epId}? O cancelamento pode não ser imediato caso o navegador já esteja processando a ação na Adobe.`)) return;
+  try {
+    const r = await fetch(`${API}/generate/cancel/${epId}`, { method: 'POST' });
+    const res = await r.json();
+    showToast(res.message, res.ok ? 'success' : 'error');
+  } catch (e) {
+    showToast('Erro ao cancelar: ' + e.message, 'error');
+  }
+}
+
+async function cancelYtUpload() {
+  if (!pendingYtEpId) return;
+  if (!confirm('Deseja realmente cancelar este upload?')) return;
+  
+  try {
+    const r = await fetch(`${API}/youtube/cancel/${pendingYtEpId}`, { method: 'POST' });
+    const res = await r.json();
+    showToast(res.message, res.ok ? 'success' : 'error');
+    if (res.ok) {
+      document.getElementById('btnCancelYtUpload').disabled = true;
+      document.getElementById('btnCancelYtUpload').innerText = 'Cancelando...';
+    }
+  } catch (e) {
+    showToast('Erro ao cancelar upload: ' + e.message, 'error');
+  }
 }
 
 function shortPath(p) {
@@ -269,6 +343,78 @@ function startPolling(epId) {
   }, 4000);
 }
 
+function startAudioPolling(epId) {
+  if (audioDownloadPollers[epId]) return;
+  audioDownloadPollers[epId] = setInterval(async () => {
+    try {
+      const r = await fetch(`${API}/audio-status/${epId}`);
+      const sdata = await r.json();
+
+      const idx = allEpisodes.findIndex(e => e.id === epId);
+      if (idx !== -1) {
+        allEpisodes[idx].audio_download_running = sdata.running;
+        allEpisodes[idx].audio_download_phase = sdata.phase;
+        allEpisodes[idx].audio_download_progress = sdata.progress;
+        allEpisodes[idx].audio_download_speed = sdata.speed;
+        allEpisodes[idx].audio_download_eta = sdata.eta;
+        
+        // Re-renderiza a row
+        const rowEl = document.getElementById(`row-${epId}`);
+        if (rowEl) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = renderEpRow(allEpisodes[idx]);
+          rowEl.replaceWith(tmp.firstElementChild);
+        }
+      }
+
+      // Atualiza modal se estiver aberto para este ep
+      if (pendingAudioEpId === epId) {
+        const statusEl = document.getElementById('audioStatusMsg');
+        const bar = document.getElementById('audioProgressBar');
+        const metaEl = document.getElementById('audioMeta');
+
+        if (statusEl && bar && metaEl) {
+          statusEl.textContent = sdata.phase || 'Baixando...';
+          bar.style.width = `${sdata.progress || 0}%`;
+
+          if (sdata.speed || sdata.eta) {
+            metaEl.textContent = [sdata.speed, sdata.eta ? `ETA ${sdata.eta}` : ''].filter(Boolean).join('  ·  ');
+          }
+
+          if (!sdata.running) {
+            document.getElementById('confirmAudio').disabled = false;
+            if (sdata.error) {
+              statusEl.textContent = `✗ Erro: ${sdata.error}`;
+              statusEl.className = 'audio-status error';
+              bar.className = 'dl-progress-bar error';
+            } else {
+              statusEl.textContent = `✓ ${sdata.phase}`;
+              statusEl.className = 'audio-status ok';
+              bar.className = 'dl-progress-bar success';
+              metaEl.textContent = '';
+            }
+          }
+        }
+      }
+
+      if (!sdata.running) {
+        clearInterval(audioDownloadPollers[epId]);
+        delete audioDownloadPollers[epId];
+        if (!sdata.error) {
+          showToast(`Áudio do ${epId} baixado! ♪`, 'success');
+          loadEpisodes(); // Puxa dados atualizados para resolver status/paths final
+        } else {
+          showToast(`Erro no áudio do ${epId}: ${sdata.error}`, 'error');
+          loadEpisodes();
+        }
+      }
+    } catch {
+      clearInterval(audioDownloadPollers[epId]);
+      delete audioDownloadPollers[epId];
+    }
+  }, 1000);
+}
+
 // =============================================
 // STATIC EVENT BINDINGS
 // =============================================
@@ -304,6 +450,7 @@ function bindStaticEvents() {
   document.getElementById('closeModalConfirmGenerate').addEventListener('click', () => closeModal('modalConfirmGenerate'));
   document.getElementById('cancelGenerate').addEventListener('click', () => closeModal('modalConfirmGenerate'));
   document.getElementById('confirmGenerate').addEventListener('click', triggerGenerate);
+  document.getElementById('btnCancelYtUpload').addEventListener('click', cancelYtUpload);
   document.querySelectorAll('.dur-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -408,14 +555,25 @@ async function saveJson() {
 // =============================================
 // MODAL: CONFIRM GENERATE
 // =============================================
-function openConfirmGenerate(epId) {
+let pendingStage = 'all';
+
+function openConfirmGenerate(epId, stage = 'all') {
   pendingEpId = epId;
+  pendingStage = stage;
   const ep = allEpisodes.find(e => e.id === epId);
+  
+  const stageLabels = {
+    'image': 'Fase 1: Gerar Imagem Base (Firefly)',
+    'video': 'Fase 2: Gerar Vídeo Animado (Firefly)',
+    'final': 'Fase 3: Renderizar Final (FFmpeg)',
+    'all': 'Pipeline Completa (Imagem → Vídeo → Render)'
+  };
+
   document.getElementById('confirmEpInfo').innerHTML = ep
     ? `<strong>${ep.titulo}</strong><br>
-       🎨 ${ep.prompt_imagem}<br>
-       🎬 ${ep.prompt_animacao}`
+       <span style="color: var(--accent2); margin-top: 8px; display: inline-block;">Ação selecionada: ${stageLabels[stage]}</span>`
     : epId;
+    
   openModal('modalConfirmGenerate');
 }
 
@@ -423,14 +581,14 @@ async function triggerGenerate() {
   if (!pendingEpId) return;
   closeModal('modalConfirmGenerate');
   try {
-    const r = await fetch(`${API}/generate`, {
+    const r = await fetch(`${API}/generate/${pendingStage}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ episode_id: pendingEpId, duration: selectedDuration })
     });
     const res = await r.json();
     if (!r.ok) throw new Error(res.detail);
-    showToast(`Pipeline iniciada para ${pendingEpId}! 🚀`, 'info');
+    showToast(`Pipeline (${pendingStage}) iniciada para ${pendingEpId}! 🚀`, 'info');
     // Atualiza localmente e começa polling
     const idx = allEpisodes.findIndex(e => e.id === pendingEpId);
     if (idx !== -1) {
@@ -454,6 +612,25 @@ function openAudioModal(epId) {
   document.getElementById('audioUrlInput').value = '';
   document.getElementById('audioStatusMsg').textContent = '';
   document.getElementById('audioStatusMsg').className = 'audio-status';
+  // Reseta barra de progresso
+  document.getElementById('audioProgressWrap').style.display = 'none';
+  document.getElementById('audioProgressBar').style.width = '0%';
+  document.getElementById('audioProgressBar').className = 'dl-progress-bar';
+  document.getElementById('audioMeta').textContent = '';
+  document.getElementById('confirmAudio').disabled = false;
+  
+  // Auto-resume se estiver baixando
+  if (ep && ep.audio_download_running) {
+    document.getElementById('audioStatusMsg').textContent = ep.audio_download_phase || 'Baixando...';
+    document.getElementById('audioStatusMsg').className = 'audio-status loading';
+    document.getElementById('audioProgressWrap').style.display = 'block';
+    document.getElementById('audioProgressBar').style.width = `${ep.audio_download_progress || 0}%`;
+    document.getElementById('confirmAudio').disabled = true;
+    if (ep.audio_download_speed || ep.audio_download_eta) {
+      document.getElementById('audioMeta').textContent = [ep.audio_download_speed, ep.audio_download_eta ? `ETA ${ep.audio_download_eta}` : ''].filter(Boolean).join('  ·  ');
+    }
+  }
+
   openModal('modalAudio');
 }
 
@@ -461,9 +638,6 @@ async function downloadAudio() {
   const url = document.getElementById('audioUrlInput').value.trim();
   const statusEl = document.getElementById('audioStatusMsg');
   if (!url) { showToast('Digite uma URL', 'warning'); return; }
-
-  statusEl.textContent = '⟳ Iniciando download...';
-  statusEl.className = 'audio-status loading';
 
   try {
     const r = await fetch(`${API}/download-audio`, {
@@ -473,33 +647,40 @@ async function downloadAudio() {
     });
     const res = await r.json();
     if (!r.ok) throw new Error(res.detail);
-    statusEl.textContent = '✓ Download iniciado! Isso pode levar alguns segundos.';
-    statusEl.className = 'audio-status ok';
+
+    // Atualiza estado local imediatamente para feedback na row
+    const idx = allEpisodes.findIndex(e => e.id === pendingAudioEpId);
+    if (idx !== -1) {
+      allEpisodes[idx].audio_download_running = true;
+      allEpisodes[idx].audio_download_phase = 'Iniciando download...';
+      allEpisodes[idx].audio_download_progress = 0;
+      allEpisodes[idx].audio_download_speed = '';
+      allEpisodes[idx].audio_download_eta = '';
+    }
+
+    statusEl.textContent = '⧳ Iniciando download...';
+    statusEl.className = 'audio-status loading';
+    document.getElementById('audioProgressWrap').style.display = 'block';
+    document.getElementById('audioProgressBar').style.width = '0%';
+    document.getElementById('audioProgressBar').className = 'dl-progress-bar';
+    document.getElementById('audioMeta').textContent = '';
+    document.getElementById('confirmAudio').disabled = true;
     showToast('Download de áudio iniciado!', 'info');
-    // Poll audio status
-    const audioPoller = setInterval(async () => {
-      try {
-        const sr = await fetch(`${API}/audio-status/${pendingAudioEpId}`);
-        const sdata = await sr.json();
-        if (!sdata.running) {
-          clearInterval(audioPoller);
-          if (sdata.error) {
-            statusEl.textContent = `✗ Erro: ${sdata.error}`;
-            statusEl.className = 'audio-status error';
-          } else {
-            statusEl.textContent = `✓ ${sdata.phase}`;
-            statusEl.className = 'audio-status ok';
-            showToast('Áudio baixado com sucesso! ♪', 'success');
-            loadEpisodes();
-          }
-        } else {
-          statusEl.textContent = `⟳ ${sdata.phase}`;
-        }
-      } catch { clearInterval(audioPoller); }
-    }, 2000);
+
+    // Força update da row imediatamente
+    const rowEl = document.getElementById(`row-${pendingAudioEpId}`);
+    if (rowEl && idx !== -1) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderEpRow(allEpisodes[idx]);
+      rowEl.replaceWith(tmp.firstElementChild);
+    }
+
+    // Inicia polling global
+    startAudioPolling(pendingAudioEpId);
   } catch (e) {
     statusEl.textContent = `✗ ${e.message}`;
     statusEl.className = 'audio-status error';
+    document.getElementById('confirmAudio').disabled = false;
   }
 }
 
@@ -580,6 +761,7 @@ async function scheduleYoutube() {
         if (!sd.running) {
           clearInterval(ytUploadPoller);
           ytUploadPoller = null;
+          document.getElementById('btnCancelYtUpload').style.display = 'none';
           if (sd.error) {
             document.getElementById('ytProgressLabel').textContent = `✗ Erro: ${sd.error}`;
             document.getElementById('ytProgressBar').style.background = 'var(--red)';

@@ -11,7 +11,7 @@
     "descricao": "Lore of the abandoned dungeon library. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
     "prompt_imagem": "Ancient dungeon library, dusty tomes, dark fantasy, dim candlelight, 16:9",
     "prompt_animacao": "Dust particles floating, candle flickering gently",
-    "arquivo_audio": "dark_library_ambience.mp3"
+    "arquivo_audio": "assets/musicas/ep_002_audio.mp3"
   },
   "ep_003": {
     "titulo": "Abandoned Medieval Castle In Endless Rain - Dark Ambient Focus",
@@ -39,7 +39,7 @@
     "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
     "prompt_imagem": "gothic fortress hallway with flickering torches, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
     "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
-    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+    "arquivo_audio": "assets/musicas/ep_006_audio.mp3"
   },
   "ep_007": {
     "titulo": "Ruined Castle Tower During Thunderstorm - Dark Ambient Focus",

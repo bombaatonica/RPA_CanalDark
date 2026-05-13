@@ -124,9 +124,13 @@ def generate_image(prompt, output_path):
             
             # Locator para o campo de texto. Firefly geralmente usa <textarea> ou <sp-textfield>
             # Usando click + insert_text para contornar erro de <sp-textfield> (Web Component) não ser um input nativo
-            prompt_input = page.locator("firefly-textfield#prompt-input, textarea[aria-label='Prompt'], sp-textfield#prompt-input").first
+            prompt_input = page.locator("firefly-textfield#prompt-input").first
             prompt_input.wait_for(state="visible", timeout=30000)
+            
+            # Limpa o Web Component diretamente via JS
+            prompt_input.evaluate("(el) => { el.value = ''; }")
             prompt_input.click()
+            page.wait_for_timeout(500)
             page.keyboard.insert_text(prompt)
             
             print("[RPA Firefly] Selecionando o modelo GPT Image 2...")
@@ -164,32 +168,50 @@ def generate_image(prompt, output_path):
                 page.wait_for_function(f'''() => {{
                     const imgs = Array.from(document.querySelectorAll("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']"));
                     return imgs.some(img => img.src && img.src.startsWith('blob:') && img.src !== "{old_src}");
-                }}''', timeout=180000)
+                }}''', timeout=240000)
             else:
-                page.wait_for_selector("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']", timeout=180000)
+                page.wait_for_selector("img[data-testid='firefly-thumbnail-image'], img[src^='blob:']", timeout=240000)
             
             # Garante que o container já apareceu
             # Usa .last pois as novas gerações são adicionadas no final da página/chat
-            grid = page.locator("div[data-testid='collapsible-batch-grid-content'], firefly-image-generation-image-variation").last
-            grid.wait_for(state="visible", timeout=30000)
+            grid = page.locator("firefly-collapsible-batch-grid, div[data-testid='collapsible-batch-grid-content']").last
+            grid.wait_for(state="visible", timeout=240000)
             
             # Aguarda um tempinho para a renderização estabilizar
             page.wait_for_timeout(2000)
             
             print("[RPA Firefly] Baixando a imagem...")
             
-            # Localiza o primeiro container da imagem gerada DENTRO deste último batch e faz o hover para exibir os botões
-            variation = grid.locator("firefly-image-generation-image-variation").first
-            variation.hover()
-            page.wait_for_timeout(1000)
-                
-            # O botão de Baixar específico deste batch que aparece no hover
-            download_btn = variation.locator("sp-action-button[data-testid='thumbnail-button-download']").first
-            download_btn.wait_for(state="visible", timeout=15000)
+            import time
+            start_time = time.time()
             
-            with page.expect_download(timeout=180000) as download_info:
-                # Agora que o botão está visível pelo hover, o click normal disparará os eventos ponteiro corretos do Web Component
-                download_btn.click()
+            variation = grid.locator("firefly-image-generation-image-variation").first
+            thumbnail = variation.locator("firefly-thumbnail").first
+            download_btn = variation.locator("sp-action-button[data-testid='thumbnail-button-download']").first
+            
+            # Loop de polling para forçar a renderização do slot no Lit-HTML
+            while time.time() - start_time < 60:
+                if thumbnail.is_visible():
+                    try:
+                        thumbnail.hover(timeout=2000)
+                        # Dispara mouseenter nativo para garantir que o web component reaja
+                        thumbnail.evaluate("el => el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}))")
+                    except Exception:
+                        pass
+                        
+                # Se o botão já foi adicionado ao DOM, podemos seguir
+                if download_btn.count() > 0:
+                    break
+                    
+                page.wait_for_timeout(1500)
+            
+            # Garante que o botão existe no DOM após o loop
+            download_btn.wait_for(state="attached", timeout=60000)
+            
+            with page.expect_download(timeout=240000) as download_info:
+                # O botão já está lá, acionamos o clique nativo via JS, 
+                # contornando a necessidade de simular o mouse em cima da imagem perfeitamente.
+                download_btn.evaluate("(el) => el.click()")
                 
             download = download_info.value
             download.save_as(output_path)
@@ -259,9 +281,13 @@ def generate_video(image_path, prompt, output_path, skip_generation=False):
                 
                 if prompt:
                     # Locator do prompt de animação/movimento
-                    # Usamos click() + insert_text() porque sp-textfield é um Web Component e .fill() pode falhar
-                    video_prompt = page.locator("firefly-textfield#prompt-input, textarea[aria-label='Prompt'], sp-textfield#prompt-input").first
+                    video_prompt = page.locator("firefly-textfield#prompt-input").first
+                    video_prompt.wait_for(state="visible", timeout=30000)
+                    
+                    # Limpa o Web Component diretamente via JS
+                    video_prompt.evaluate("(el) => { el.value = ''; }")
                     video_prompt.click()
+                    page.wait_for_timeout(500)
                     page.keyboard.insert_text(prompt)
                     
                 print("[RPA Firefly] Selecionando o modelo Runway Gen-4.5...")
@@ -311,11 +337,35 @@ def generate_video(image_path, prompt, output_path, skip_generation=False):
             page.wait_for_timeout(1000)
             
             print("[RPA Firefly] Geração concluída! Baixando o vídeo...")
+            
+            # Fallback: Injeta um script na página para tentar clicar no botão a cada 5 segundos 
+            # até o Playwright registrar o download, caso o botão esteja temporariamente desabilitado.
+            page.evaluate("""() => {
+                window.downloadInterval = setInterval(() => {
+                    let btn = document.querySelector("firefly-media-timeline-download-button");
+                    if (btn) {
+                        btn.click();
+                        if (btn.shadowRoot) {
+                            let shadowBtn = btn.shadowRoot.querySelector("sp-action-button");
+                            if (shadowBtn) shadowBtn.click();
+                        }
+                    }
+                    let spBtn = document.querySelector("sp-action-button[data-testid='firefly-media-timeline-download-button']");
+                    if (spBtn) spBtn.click();
+                }, 5000);
+            }""")
+            
             with page.expect_download(timeout=120000) as download_info:
-                # O botão real fica DENTRO do shadow dom do <firefly-media-timeline-download-button>
-                # O Playwright faz isso nativamente com o clique simulado, o evaluate javascript as vezes falha nisso.
-                download_btn.click(force=True)
-                
+                # O clique original via Playwright continua aqui, mas se o botão estiver desabilitado, 
+                # o interval do JS vai continuar batendo nele até que libere e inicie o download.
+                try:
+                    download_btn.click(force=True)
+                except Exception:
+                    pass
+            
+            # Limpa o fallback de cliques assim que o download começar
+            page.evaluate("clearInterval(window.downloadInterval)")
+            
             download = download_info.value
             download.save_as(output_path)
             

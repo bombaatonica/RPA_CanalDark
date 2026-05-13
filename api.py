@@ -93,14 +93,23 @@ def load_metadata() -> dict:
 def get_episode_status(ep_id: str, meta: dict) -> dict:
     """Retorna o estado completo de um episódio com caminhos de arquivo."""
     ep = meta.get(ep_id, {})
-    
+
+    raw_image = BASE_DIR / "workspace" / "imagens_raw" / f"{ep_id}_base.jpg"
     raw_video = WORKSPACE_RAW / f"{ep_id}_anim.mp4"
     final_video = OUTPUT_DIR / f"obsidian_{ep_id}.mp4"
-    
+
     audio_path_rel = ep.get("arquivo_audio", "")
+
+    # Normaliza caminhos sem diretório (ex: "musica.mp3" → "assets/musicas/musica.mp3")
+    if audio_path_rel and "/" not in audio_path_rel and "\\" not in audio_path_rel:
+        audio_path_rel = f"assets/musicas/{audio_path_rel}"
+        # Corrige o JSON silenciosamente para evitar reincidência
+        meta[ep_id]["arquivo_audio"] = audio_path_rel
+
     audio_exists = (BASE_DIR / audio_path_rel).exists() if audio_path_rel else False
 
     proc = pipeline_status.get(ep_id, {})
+    audio_dl = pipeline_status.get(f"audio_{ep_id}", {})
 
     return {
         "id": ep_id,
@@ -111,6 +120,14 @@ def get_episode_status(ep_id: str, meta: dict) -> dict:
         "arquivo_audio": audio_path_rel,
         "audio_url": f"/assets/musicas/{Path(audio_path_rel).name}" if audio_exists else None,
         "audio_exists": audio_exists,
+        "audio_download_running": audio_dl.get("running", False),
+        "audio_download_progress": audio_dl.get("progress", 0),
+        "audio_download_phase": audio_dl.get("phase", None),
+        "audio_download_speed": audio_dl.get("speed", ""),
+        "audio_download_eta": audio_dl.get("eta", ""),
+        "raw_image_exists": raw_image.exists(),
+        "raw_image_url": f"/workspace/imagens_raw/{ep_id}_base.jpg" if raw_image.exists() else None,
+        "raw_image_size_mb": round(raw_image.stat().st_size / 1_000_000, 2) if raw_image.exists() else None,
         "raw_video_exists": raw_video.exists(),
         "raw_video_url": f"/workspace/videos_raw/{ep_id}_anim.mp4" if raw_video.exists() else None,
         "raw_video_size_mb": round(raw_video.stat().st_size / 1_000_000, 2) if raw_video.exists() else None,
@@ -119,6 +136,7 @@ def get_episode_status(ep_id: str, meta: dict) -> dict:
         "final_video_size_mb": round(final_video.stat().st_size / 1_000_000, 2) if final_video.exists() else None,
         "pipeline_running": proc.get("running", False),
         "pipeline_phase": proc.get("phase", None),
+        "pipeline_progress": proc.get("progress", 0),
         "pipeline_error": proc.get("error", None),
     }
 
@@ -171,16 +189,15 @@ def save_metadata(req: SaveMetadataRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _run_pipeline(episode_id: str, duration: int):
-    """Executa a pipeline em uma thread separada."""
-    pipeline_status[episode_id] = {"running": True, "phase": "Iniciando...", "error": None}
+def _run_stage(episode_id: str, stage: str, duration: int):
+    """Executa uma etapa específica da pipeline em uma thread separada."""
+    pipeline_status[episode_id] = {"running": True, "phase": f"Iniciando {stage}...", "progress": 0, "error": None, "cancel_requested": False}
     try:
         import sys
-        # Adiciona o diretório base ao path para importar os módulos do projeto
         sys.path.insert(0, str(BASE_DIR))
         from core import config_loader, rpa_firefly, video_engine
 
-        pipeline_status[episode_id]["phase"] = "Fase 1: Carregando configurações"
+        pipeline_status[episode_id].update({"phase": "Carregando configurações...", "progress": 5})
         metadata = config_loader.initialize(episode_id)
 
         img_out_path = str(BASE_DIR / "workspace" / "imagens_raw" / f"{episode_id}_base.jpg")
@@ -188,23 +205,66 @@ def _run_pipeline(episode_id: str, duration: int):
         audio_path = str(BASE_DIR / metadata['arquivo_audio'])
         final_out_path = str(BASE_DIR / "output" / f"obsidian_{episode_id}.mp4")
 
-        pipeline_status[episode_id]["phase"] = "Fase 2: Gerando imagem no Firefly"
-        rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
+        # Verifica se pediram cancelamento antes de começar o trabalho pesado
+        if pipeline_status[episode_id].get("cancel_requested"):
+            raise InterruptedError("Cancelado pelo usuário")
 
-        pipeline_status[episode_id]["phase"] = "Fase 3: Gerando animação no Firefly"
-        rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
+        if stage == "image":
+            pipeline_status[episode_id].update({"phase": "Gerando imagem (Firefly)...", "progress": 30})
+            rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
+            pipeline_status[episode_id] = {"running": False, "phase": "Imagem gerada!", "progress": 100, "error": None}
+            
+        elif stage == "video":
+            if not os.path.exists(img_out_path):
+                raise Exception("Imagem base não encontrada! Gere a imagem primeiro.")
+            pipeline_status[episode_id].update({"phase": "Gerando animação (Firefly)...", "progress": 30})
+            rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
+            pipeline_status[episode_id] = {"running": False, "phase": "Vídeo bruto gerado!", "progress": 100, "error": None}
+            
+        elif stage == "final":
+            if not os.path.exists(vid_out_path) or not os.path.exists(audio_path):
+                raise Exception("Vídeo raw ou áudio não encontrados! Gere as etapas anteriores primeiro.")
+            
+            pipeline_status[episode_id].update({"phase": "Renderizando (FFmpeg)...", "progress": 10})
+            
+            def ffmpeg_progress(p):
+                pipeline_status[episode_id].update({"progress": int(10 + (p * 0.90))})
+                
+            def check_cancel():
+                return pipeline_status[episode_id].get("cancel_requested", False)
+                
+            video_engine.render_episode(vid_out_path, audio_path, final_out_path, duration=duration, progress_callback=ffmpeg_progress, cancel_check=check_cancel)
+            pipeline_status[episode_id] = {"running": False, "phase": "Vídeo finalizado!", "progress": 100, "error": None}
+            
+        elif stage == "all":
+            # Mantém a pipeline completa para compatibilidade ou se quiserem usar depois
+            pipeline_status[episode_id].update({"phase": "Fase 1: Gerando imagem", "progress": 10})
+            rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
+            if pipeline_status[episode_id].get("cancel_requested"): raise InterruptedError()
+            
+            pipeline_status[episode_id].update({"phase": "Fase 2: Gerando animação", "progress": 40})
+            rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
+            if pipeline_status[episode_id].get("cancel_requested"): raise InterruptedError()
+            
+            pipeline_status[episode_id].update({"phase": "Fase 3: Renderizando (FFmpeg)", "progress": 70})
+            def ffmpeg_progress_all(p):
+                pipeline_status[episode_id].update({"progress": int(70 + (p * 0.30))})
+            def check_cancel_all():
+                return pipeline_status[episode_id].get("cancel_requested", False)
+            video_engine.render_episode(vid_out_path, audio_path, final_out_path, duration=duration, progress_callback=ffmpeg_progress_all, cancel_check=check_cancel_all)
+            pipeline_status[episode_id] = {"running": False, "phase": "Pipeline completa!", "progress": 100, "error": None}
 
-        pipeline_status[episode_id]["phase"] = "Fase 4: Renderizando vídeo final (FFmpeg)"
-        video_engine.render_episode(vid_out_path, audio_path, final_out_path, duration=duration)
-
-        pipeline_status[episode_id] = {"running": False, "phase": "Concluído!", "error": None}
     except Exception as e:
-        pipeline_status[episode_id] = {"running": False, "phase": "Erro", "error": str(e)}
+        phase = "Cancelado" if isinstance(e, InterruptedError) else "Erro"
+        pipeline_status[episode_id] = {"running": False, "phase": phase, "progress": 0, "error": str(e)}
 
 
-@app.post("/api/generate")
-def trigger_generate(req: GenerateRequest):
-    """Dispara a pipeline de geração para um episódio."""
+@app.post("/api/generate/{stage}")
+def trigger_generate_stage(stage: str, req: GenerateRequest):
+    """Dispara uma etapa específica da pipeline ('image', 'video', 'final' ou 'all')."""
+    if stage not in ["image", "video", "final", "all"]:
+        raise HTTPException(status_code=400, detail="Estágio inválido")
+        
     meta = load_metadata()
     if req.episode_id not in meta:
         raise HTTPException(status_code=404, detail="Episódio não encontrado")
@@ -213,14 +273,26 @@ def trigger_generate(req: GenerateRequest):
     if status.get("running"):
         raise HTTPException(status_code=409, detail="Pipeline já em execução para este episódio")
     
+    # Limpa status anterior
+    pipeline_status[req.episode_id] = {"running": True, "phase": "Iniciando", "progress": 0, "error": None}
+    
     thread = threading.Thread(
-        target=_run_pipeline,
-        args=(req.episode_id, req.duration),
+        target=_run_stage,
+        args=(req.episode_id, stage, req.duration),
         daemon=True
     )
     thread.start()
     
-    return {"ok": True, "message": f"Pipeline iniciada para {req.episode_id}"}
+    return {"ok": True, "message": f"Pipeline ({stage}) iniciada para {req.episode_id}"}
+
+
+@app.post("/api/generate/cancel/{episode_id}")
+def cancel_generate(episode_id: str):
+    """Solicita o cancelamento da pipeline em execução."""
+    if episode_id in pipeline_status and pipeline_status[episode_id].get("running"):
+        pipeline_status[episode_id]["cancel_requested"] = True
+        return {"ok": True, "message": "Cancelamento solicitado. O processo irá parar em breve."}
+    raise HTTPException(status_code=400, detail="Nenhuma pipeline em execução para cancelar.")
 
 
 @app.get("/api/status/{episode_id}")
@@ -233,33 +305,75 @@ def get_pipeline_status(episode_id: str):
 
 
 def _download_audio(episode_id: str, url: str, output_filename: str):
-    """Baixa o áudio de uma URL do YouTube usando yt-dlp."""
-    pipeline_status[f"audio_{episode_id}"] = {"running": True, "phase": "Baixando áudio...", "error": None}
+    """Baixa o áudio de uma URL do YouTube usando yt-dlp com progresso em tempo real."""
+    import re
+    pipeline_status[f"audio_{episode_id}"] = {
+        "running": True, "phase": "Iniciando download...",
+        "progress": 0, "speed": "", "eta": "", "error": None
+    }
     try:
         ASSETS_AUDIO.mkdir(parents=True, exist_ok=True)
         output_path = str(ASSETS_AUDIO / output_filename)
-        
+
         cmd = [
             "yt-dlp",
-            "--no-playlist",          # nunca baixar playlist inteira
+            "--no-playlist",
+            "--newline",              # força uma linha por atualização de progresso
             "-x",
             "--audio-format", "mp3",
             "--audio-quality", "0",
             "-o", output_path,
             url
         ]
-        subprocess.run(cmd, check=True)
-        
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+
+        for line in process.stdout:
+            line = line.strip()
+            if "[download]" in line and "%" in line:
+                pct_match = re.search(r'(\d+\.?\d*)%', line)
+                speed_match = re.search(r'at\s+([\d.]+\s*\w+/s)', line)
+                eta_match = re.search(r'ETA\s+(\S+)', line)
+                if pct_match:
+                    pct = min(float(pct_match.group(1)), 99.0)  # reserva 100 p/ conclusão
+                    pipeline_status[f"audio_{episode_id}"].update({
+                        "phase": f"Baixando: {pct:.0f}%",
+                        "progress": pct,
+                        "speed": speed_match.group(1) if speed_match else "",
+                        "eta": eta_match.group(1) if eta_match else ""
+                    })
+            elif "[ExtractAudio]" in line:
+                pipeline_status[f"audio_{episode_id}"].update({
+                    "phase": "Convertendo para MP3...", "progress": 99
+                })
+
+        process.wait()
+        if process.returncode != 0:
+            raise Exception(f"yt-dlp falhou (código {process.returncode})")
+
         # Atualiza o metadado do episódio com o novo áudio
         meta = load_metadata()
         if episode_id in meta:
             meta[episode_id]["arquivo_audio"] = f"assets/musicas/{output_filename}"
             with open(METADATA_PATH, "w", encoding="utf-8") as f:
                 json.dump(meta, f, ensure_ascii=False, indent=2)
-        
-        pipeline_status[f"audio_{episode_id}"] = {"running": False, "phase": "Download concluído!", "error": None}
+
+        pipeline_status[f"audio_{episode_id}"] = {
+            "running": False, "phase": "Download concluído!",
+            "progress": 100, "speed": "", "eta": "", "error": None
+        }
     except Exception as e:
-        pipeline_status[f"audio_{episode_id}"] = {"running": False, "phase": "Erro no download", "error": str(e)}
+        pipeline_status[f"audio_{episode_id}"] = {
+            "running": False, "phase": "Erro no download",
+            "progress": 0, "speed": "", "eta": "", "error": str(e)
+        }
 
 
 @app.post("/api/download-audio")
@@ -337,11 +451,13 @@ def yt_auth_status():
     return {"authenticated": creds is not None}
 
 
+# Armazena temporariamente os estados e code_verifiers (PKCE) do OAuth do Google
+oauth_states = {}
+
 @app.get("/api/youtube/auth")
-def yt_auth_start():
+def yt_auth():
     """
-    Inicia o fluxo OAuth2. Redireciona para o Google para autorização.
-    Após autorizar, o Google redireciona para /api/youtube/callback.
+    Inicia o fluxo OAuth2 para o YouTube e redireciona o usuário.
     """
     if not YOUTUBE_AVAILABLE:
         raise HTTPException(status_code=500, detail="google-api-python-client não instalado")
@@ -355,11 +471,16 @@ def yt_auth_start():
         scopes=YT_SCOPES,
         redirect_uri="http://localhost:8000/api/youtube/callback"
     )
-    auth_url, _ = flow.authorization_url(
+    auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
         prompt="consent"
     )
+    
+    # Salva o code_verifier (se existir) para o fluxo PKCE exigido pelo Google
+    if hasattr(flow, 'code_verifier'):
+        oauth_states[state] = flow.code_verifier
+        
     return RedirectResponse(url=auth_url)
 
 
@@ -377,6 +498,11 @@ def yt_auth_callback(code: str, state: Optional[str] = None):
             state=state,   # necessário para validar o state do OAuth
             redirect_uri="http://localhost:8000/api/youtube/callback"
         )
+        
+        # Restaura o code_verifier salvo
+        if state in oauth_states:
+            flow.code_verifier = oauth_states.pop(state)
+            
         flow.fetch_token(code=code)
         creds = flow.credentials
         TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
@@ -404,10 +530,22 @@ def _upload_to_youtube(ep_id: str, video_path: str, title: str,
     try:
         youtube = _build_yt_service()
 
+        # Bloco de Tags SEO solicitado pelo usuário (formatado como hashtags)
+        seo_tags_block = (
+            "\n\n🔥 TAGS SEO\n"
+            "#darkfantasy #ambience #gothicfantasy #music #medievalambience\n"
+            "#darkambient #fantasysleepmusic #cathedralambience #dungeonsynth\n"
+            "#medievalmusic #studying #reading #darkcathedral #rainambience\n"
+            "#RPG #backgroundmusic #hauntedcathedral #sleepmusic\n"
+            "#gothicambience #ObsidianRealm"
+        )
+        
+        full_description = f"{description}{seo_tags_block}"
+
         body = {
             "snippet": {
                 "title": title,
-                "description": description,
+                "description": full_description,
                 "tags": tags,
                 "categoryId": category_id,
                 "defaultLanguage": "pt"
@@ -433,9 +571,14 @@ def _upload_to_youtube(ep_id: str, video_path: str, title: str,
         )
 
         youtube_uploads[ep_id]["phase"] = "Enviando vídeo ao YouTube..."
+        youtube_uploads[ep_id]["cancel_requested"] = False
 
         response = None
         while response is None:
+            # Verifica cancelamento
+            if youtube_uploads[ep_id].get("cancel_requested"):
+                raise InterruptedError("Upload cancelado pelo usuário")
+
             status, response = request.next_chunk()
             if status:
                 pct = int(status.progress() * 100)
@@ -510,6 +653,15 @@ def get_upload_status(episode_id: str):
         {"running": False, "phase": None, "progress": 0, "error": None,
          "video_id": None, "video_url": None}
     )
+
+
+@app.post("/api/youtube/cancel/{episode_id}")
+def cancel_youtube_upload(episode_id: str):
+    """Solicita o cancelamento do upload YouTube em execução."""
+    if episode_id in youtube_uploads and youtube_uploads[episode_id].get("running"):
+        youtube_uploads[episode_id]["cancel_requested"] = True
+        return {"ok": True, "message": "Cancelamento do upload solicitado."}
+    raise HTTPException(status_code=400, detail="Nenhum upload em execução para cancelar.")
 
 
 # Serve o frontend na raiz
