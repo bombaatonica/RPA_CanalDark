@@ -46,7 +46,7 @@
     "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
     "prompt_imagem": "ruined castle tower during thunderstorm, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
     "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
-    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+    "arquivo_audio": "assets/musicas/ep_007_audio.mp3"
   },
   "ep_008": {
     "titulo": "Plague Kingdom Walls Covered In Mist - Dark Ambient Focus",
@@ -67,7 +67,7 @@
     "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
     "prompt_imagem": "blood moon over haunted fortress, ultra detailed, cinematic lighting, volumetric fog, moody shadows, hyper realistic, dark fantasy atmosphere, 8k, masterpiece --ar 16:9",
     "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
-    "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
+    "arquivo_audio": "assets/musicas/ep_010_audio.mp3"
   },
   "ep_011": {
     "titulo": "Dark Royal Library With Fireplace - Dark Ambient Focus",

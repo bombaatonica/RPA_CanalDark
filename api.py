@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
+from core import r2_storage
+
 # YouTube API
 try:
     from google.oauth2.credentials import Credentials
@@ -90,13 +92,12 @@ def load_metadata() -> dict:
     with open(METADATA_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def get_episode_status(ep_id: str, meta: dict) -> dict:
-    """Retorna o estado completo de um episódio com caminhos de arquivo."""
+def get_episode_status(ep_id: str, meta: dict, r2_objects: dict = None) -> dict:
+    """Retorna o estado completo de um episódio com caminhos de arquivo no R2."""
     ep = meta.get(ep_id, {})
 
-    raw_image = BASE_DIR / "workspace" / "imagens_raw" / f"{ep_id}_base.jpg"
-    raw_video = WORKSPACE_RAW / f"{ep_id}_anim.mp4"
-    final_video = OUTPUT_DIR / f"obsidian_{ep_id}.mp4"
+    if r2_objects is None:
+        r2_objects = r2_storage.list_all_objects()
 
     audio_path_rel = ep.get("arquivo_audio", "")
 
@@ -106,7 +107,15 @@ def get_episode_status(ep_id: str, meta: dict) -> dict:
         # Corrige o JSON silenciosamente para evitar reincidência
         meta[ep_id]["arquivo_audio"] = audio_path_rel
 
-    audio_exists = (BASE_DIR / audio_path_rel).exists() if audio_path_rel else False
+    raw_image_key = f"imagens_raw/{ep_id}_base.jpg"
+    raw_video_key = f"videos_raw/{ep_id}_anim.mp4"
+    final_video_key = f"output/obsidian_{ep_id}.mp4"
+    audio_key = audio_path_rel
+
+    audio_exists = audio_key in r2_objects
+    raw_image_exists = raw_image_key in r2_objects
+    raw_video_exists = raw_video_key in r2_objects
+    final_video_exists = final_video_key in r2_objects
 
     proc = pipeline_status.get(ep_id, {})
     audio_dl = pipeline_status.get(f"audio_{ep_id}", {})
@@ -118,22 +127,22 @@ def get_episode_status(ep_id: str, meta: dict) -> dict:
         "prompt_imagem": ep.get("prompt_imagem", ""),
         "prompt_animacao": ep.get("prompt_animacao", ""),
         "arquivo_audio": audio_path_rel,
-        "audio_url": f"/assets/musicas/{Path(audio_path_rel).name}" if audio_exists else None,
+        "audio_url": r2_storage.generate_presigned_url(audio_key) if audio_exists else None,
         "audio_exists": audio_exists,
         "audio_download_running": audio_dl.get("running", False),
         "audio_download_progress": audio_dl.get("progress", 0),
         "audio_download_phase": audio_dl.get("phase", None),
         "audio_download_speed": audio_dl.get("speed", ""),
         "audio_download_eta": audio_dl.get("eta", ""),
-        "raw_image_exists": raw_image.exists(),
-        "raw_image_url": f"/workspace/imagens_raw/{ep_id}_base.jpg" if raw_image.exists() else None,
-        "raw_image_size_mb": round(raw_image.stat().st_size / 1_000_000, 2) if raw_image.exists() else None,
-        "raw_video_exists": raw_video.exists(),
-        "raw_video_url": f"/workspace/videos_raw/{ep_id}_anim.mp4" if raw_video.exists() else None,
-        "raw_video_size_mb": round(raw_video.stat().st_size / 1_000_000, 2) if raw_video.exists() else None,
-        "final_video_exists": final_video.exists(),
-        "final_video_url": f"/output/obsidian_{ep_id}.mp4" if final_video.exists() else None,
-        "final_video_size_mb": round(final_video.stat().st_size / 1_000_000, 2) if final_video.exists() else None,
+        "raw_image_exists": raw_image_exists,
+        "raw_image_url": r2_storage.generate_presigned_url(raw_image_key) if raw_image_exists else None,
+        "raw_image_size_mb": round(r2_objects[raw_image_key] / 1_000_000, 2) if raw_image_exists else None,
+        "raw_video_exists": raw_video_exists,
+        "raw_video_url": r2_storage.generate_presigned_url(raw_video_key) if raw_video_exists else None,
+        "raw_video_size_mb": round(r2_objects[raw_video_key] / 1_000_000, 2) if raw_video_exists else None,
+        "final_video_exists": final_video_exists,
+        "final_video_url": r2_storage.generate_presigned_url(final_video_key) if final_video_exists else None,
+        "final_video_size_mb": round(r2_objects[final_video_key] / 1_000_000, 2) if final_video_exists else None,
         "pipeline_running": proc.get("running", False),
         "pipeline_phase": proc.get("phase", None),
         "pipeline_progress": proc.get("progress", 0),
@@ -147,7 +156,8 @@ def get_episode_status(ep_id: str, meta: dict) -> dict:
 def list_episodes():
     """Lista todos os episódios com seus status."""
     meta = load_metadata()
-    return [get_episode_status(ep_id, meta) for ep_id in meta.keys()]
+    r2_objects = r2_storage.list_all_objects()
+    return [get_episode_status(ep_id, meta, r2_objects) for ep_id in meta.keys()]
 
 
 @app.get("/api/episodes/{episode_id}")
@@ -212,46 +222,78 @@ def _run_stage(episode_id: str, stage: str, duration: int):
         if stage == "image":
             pipeline_status[episode_id].update({"phase": "Gerando imagem (Firefly)...", "progress": 30})
             rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
+            pipeline_status[episode_id].update({"phase": "Enviando imagem para R2...", "progress": 90})
+            r2_storage.upload_file(img_out_path, f"imagens_raw/{episode_id}_base.jpg")
+            if os.path.exists(img_out_path): os.remove(img_out_path)
             pipeline_status[episode_id] = {"running": False, "phase": "Imagem gerada!", "progress": 100, "error": None}
             
         elif stage == "video":
+            pipeline_status[episode_id].update({"phase": "Baixando imagem do R2...", "progress": 5})
+            r2_storage.download_file(f"imagens_raw/{episode_id}_base.jpg", img_out_path)
             if not os.path.exists(img_out_path):
-                raise Exception("Imagem base não encontrada! Gere a imagem primeiro.")
+                raise Exception("Imagem base não encontrada no R2! Gere a imagem primeiro.")
             pipeline_status[episode_id].update({"phase": "Gerando animação (Firefly)...", "progress": 30})
             rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
+            pipeline_status[episode_id].update({"phase": "Enviando vídeo para R2...", "progress": 90})
+            r2_storage.upload_file(vid_out_path, f"videos_raw/{episode_id}_anim.mp4")
+            if os.path.exists(img_out_path): os.remove(img_out_path)
+            if os.path.exists(vid_out_path): os.remove(vid_out_path)
             pipeline_status[episode_id] = {"running": False, "phase": "Vídeo bruto gerado!", "progress": 100, "error": None}
             
         elif stage == "final":
+            pipeline_status[episode_id].update({"phase": "Baixando arquivos do R2...", "progress": 5})
+            r2_storage.download_file(f"videos_raw/{episode_id}_anim.mp4", vid_out_path)
+            r2_storage.download_file(metadata['arquivo_audio'], audio_path)
+            
             if not os.path.exists(vid_out_path) or not os.path.exists(audio_path):
-                raise Exception("Vídeo raw ou áudio não encontrados! Gere as etapas anteriores primeiro.")
+                raise Exception("Vídeo raw ou áudio não encontrados no R2! Gere as etapas anteriores primeiro.")
             
             pipeline_status[episode_id].update({"phase": "Renderizando (FFmpeg)...", "progress": 10})
             
             def ffmpeg_progress(p):
-                pipeline_status[episode_id].update({"progress": int(10 + (p * 0.90))})
+                pipeline_status[episode_id].update({"progress": int(10 + (p * 0.70))})
                 
             def check_cancel():
                 return pipeline_status[episode_id].get("cancel_requested", False)
                 
             video_engine.render_episode(vid_out_path, audio_path, final_out_path, duration=duration, progress_callback=ffmpeg_progress, cancel_check=check_cancel)
+            
+            pipeline_status[episode_id].update({"phase": "Enviando final para R2...", "progress": 90})
+            r2_storage.upload_file(final_out_path, f"output/obsidian_{episode_id}.mp4")
+            
+            for f in [vid_out_path, audio_path, final_out_path]:
+                if os.path.exists(f): os.remove(f)
+                
             pipeline_status[episode_id] = {"running": False, "phase": "Vídeo finalizado!", "progress": 100, "error": None}
             
         elif stage == "all":
-            # Mantém a pipeline completa para compatibilidade ou se quiserem usar depois
-            pipeline_status[episode_id].update({"phase": "Fase 1: Gerando imagem", "progress": 10})
+            # Mantém a pipeline completa
+            pipeline_status[episode_id].update({"phase": "Fase 1: Gerando imagem", "progress": 5})
             rpa_firefly.generate_image(metadata['prompt_imagem'], img_out_path)
             if pipeline_status[episode_id].get("cancel_requested"): raise InterruptedError()
             
-            pipeline_status[episode_id].update({"phase": "Fase 2: Gerando animação", "progress": 40})
+            pipeline_status[episode_id].update({"phase": "Fase 2: Gerando animação", "progress": 30})
             rpa_firefly.generate_video(img_out_path, metadata['prompt_animacao'], vid_out_path)
             if pipeline_status[episode_id].get("cancel_requested"): raise InterruptedError()
             
-            pipeline_status[episode_id].update({"phase": "Fase 3: Renderizando (FFmpeg)", "progress": 70})
+            pipeline_status[episode_id].update({"phase": "Fase 3: Baixando áudio do R2", "progress": 60})
+            r2_storage.download_file(metadata['arquivo_audio'], audio_path)
+            
+            pipeline_status[episode_id].update({"phase": "Fase 4: Renderizando (FFmpeg)", "progress": 65})
             def ffmpeg_progress_all(p):
-                pipeline_status[episode_id].update({"progress": int(70 + (p * 0.30))})
+                pipeline_status[episode_id].update({"progress": int(65 + (p * 0.25))})
             def check_cancel_all():
                 return pipeline_status[episode_id].get("cancel_requested", False)
             video_engine.render_episode(vid_out_path, audio_path, final_out_path, duration=duration, progress_callback=ffmpeg_progress_all, cancel_check=check_cancel_all)
+            
+            pipeline_status[episode_id].update({"phase": "Enviando arquivos para R2...", "progress": 95})
+            r2_storage.upload_file(img_out_path, f"imagens_raw/{episode_id}_base.jpg")
+            r2_storage.upload_file(vid_out_path, f"videos_raw/{episode_id}_anim.mp4")
+            r2_storage.upload_file(final_out_path, f"output/obsidian_{episode_id}.mp4")
+            
+            for f in [img_out_path, vid_out_path, audio_path, final_out_path]:
+                if os.path.exists(f): os.remove(f)
+                
             pipeline_status[episode_id] = {"running": False, "phase": "Pipeline completa!", "progress": 100, "error": None}
 
     except Exception as e:
@@ -364,6 +406,11 @@ def _download_audio(episode_id: str, url: str, output_filename: str):
             meta[episode_id]["arquivo_audio"] = f"assets/musicas/{output_filename}"
             with open(METADATA_PATH, "w", encoding="utf-8") as f:
                 json.dump(meta, f, ensure_ascii=False, indent=2)
+
+        pipeline_status[f"audio_{episode_id}"].update({"phase": "Enviando para R2...", "progress": 99})
+        r2_storage.upload_file(output_path, f"assets/musicas/{output_filename}")
+        if os.path.exists(output_path):
+            os.remove(output_path)
 
         pipeline_status[f"audio_{episode_id}"] = {
             "running": False, "phase": "Download concluído!",
@@ -515,19 +562,24 @@ def yt_auth_callback(code: str, state: Optional[str] = None):
 # YOUTUBE — Upload e Agendamento
 # ============================================================
 
-def _upload_to_youtube(ep_id: str, video_path: str, title: str,
+def _upload_to_youtube(ep_id: str, title: str,
                        description: str, tags: list, category_id: str,
                        scheduled_time: str):
     """Executa o upload do vídeo para o YouTube em thread separada."""
     youtube_uploads[ep_id] = {
         "running": True,
-        "phase": "Iniciando upload...",
+        "phase": "Baixando vídeo do R2...",
         "progress": 0,
         "error": None,
         "video_id": None,
         "video_url": None
     }
+    
+    video_path = str(OUTPUT_DIR / f"obsidian_{ep_id}.mp4")
+    
     try:
+        r2_storage.download_file(f"output/obsidian_{ep_id}.mp4", video_path)
+        
         youtube = _build_yt_service()
 
         # Essas vão para a aba "Tags" (Keywords) internas do YouTube
@@ -596,14 +648,18 @@ def _upload_to_youtube(ep_id: str, video_path: str, title: str,
             "video_url": f"https://studio.youtube.com/video/{video_id}/edit",
             "scheduled_time": scheduled_time
         }
+        
+        if os.path.exists(video_path): os.remove(video_path)
 
     except HttpError as e:
+        if os.path.exists(video_path): os.remove(video_path)
         youtube_uploads[ep_id] = {
             "running": False, "phase": "Erro HTTP", "progress": 0,
             "error": f"YouTube API Error {e.resp.status}: {e.content.decode()}",
             "video_id": None, "video_url": None
         }
     except Exception as e:
+        if os.path.exists(video_path): os.remove(video_path)
         youtube_uploads[ep_id] = {
             "running": False, "phase": "Erro", "progress": 0,
             "error": str(e), "video_id": None, "video_url": None
@@ -617,11 +673,12 @@ def schedule_youtube(req: YoutubeScheduleRequest):
     if req.episode_id not in meta:
         raise HTTPException(status_code=404, detail="Episódio não encontrado")
 
-    final_video = OUTPUT_DIR / f"obsidian_{req.episode_id}.mp4"
-    if not final_video.exists():
+    r2_objects = r2_storage.list_all_objects()
+    final_video_key = f"output/obsidian_{req.episode_id}.mp4"
+    if final_video_key not in r2_objects:
         raise HTTPException(
             status_code=400,
-            detail=f"Vídeo final não encontrado: {final_video.name}. Gere o vídeo primeiro."
+            detail=f"Vídeo final não encontrado no R2. Gere o vídeo primeiro."
         )
 
     current = youtube_uploads.get(req.episode_id, {})
@@ -632,7 +689,6 @@ def schedule_youtube(req: YoutubeScheduleRequest):
         target=_upload_to_youtube,
         args=(
             req.episode_id,
-            str(final_video),
             req.title,
             req.description,
             req.tags,
