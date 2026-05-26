@@ -61,7 +61,7 @@ def main():
             "titulo": f"{title_base} - Dark Ambient Focus",
             "descricao": "Step Into The Shadows... Um reino esquecido. Fantasy ambience, medieval sleep music, RPG background, reading ambience, deep focus.",
             "prompt_imagem": full_prompt,
-            "prompt_animacao": "Heavy rain falling, dynamic particles, subtle glow",
+            "prompt_animacao": "Heavy rain falling outside, dynamic particles, subtle glow",
             "arquivo_audio": "assets/musicas/Ecco2k - Don't Ask.mp3"
         }
         
