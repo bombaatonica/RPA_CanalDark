@@ -578,8 +578,12 @@ def _upload_to_youtube(ep_id: str, title: str,
     video_path = str(OUTPUT_DIR / f"obsidian_{ep_id}.mp4")
     
     try:
-        r2_storage.download_file(f"output/obsidian_{ep_id}.mp4", video_path)
+        youtube_uploads[ep_id]["phase"] = "Baixando vídeo do Cloudflare (Temporário)..."
+        success = r2_storage.download_file(f"output/obsidian_{ep_id}.mp4", video_path)
         
+        if not success or not os.path.exists(video_path):
+            raise Exception("Falha ao baixar o vídeo final do Cloudflare R2 para upload.")
+            
         youtube = _build_yt_service()
 
         # Essas vão para a aba "Tags" (Keywords) internas do YouTube

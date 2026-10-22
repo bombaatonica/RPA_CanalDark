@@ -13,8 +13,16 @@ def ensure_logged_in(page):
     print("[RPA Firefly] Verificando status de login na Adobe...")
     did_login = False
     try:
-        # Passo 1: Clicar no botão do perfil (cabeçalho)
-        profile_btn = page.locator("button[data-test-id='unav-profile--sign-in'], button.profile-comp").first
+        # Passo 1: Clicar no botão do perfil (cabeçalho) ou no modal de sessão expirada
+        login_btn_selector = (
+            "button[data-test-id='unav-profile--sign-in'], "
+            "button.profile-comp, "
+            "sp-button[data-testid='auth-sign-in-button'], "
+            "sp-button:has-text('Fazer logon'), "
+            "button:has-text('Fazer logon'), "
+            "a:has-text('Fazer logon')"
+        )
+        profile_btn = page.locator(login_btn_selector).first
         
         try:
             profile_btn.wait_for(state="visible", timeout=10000)
@@ -55,7 +63,9 @@ def ensure_logged_in(page):
             return False
             
         print(f"[RPA Firefly] Tela de login detectada. Inserindo email...")
-        email_input.fill(adobe_email)
+        email_input.click()
+        email_input.fill("")
+        email_input.press_sequentially(adobe_email, delay=50)
         did_login = True
         
         # Botão Continuar
@@ -72,7 +82,9 @@ def ensure_logged_in(page):
             return False
             
         print("[RPA Firefly] Inserindo senha...")
-        password_input.fill(adobe_password)
+        password_input.click()
+        password_input.fill("")
+        password_input.press_sequentially(adobe_password, delay=50)
         
         # Botão Continuar (login)
         pass_continue_btn = login_context.locator("button[data-id='PasswordPage-ContinueButton'], button[type='submit']").first

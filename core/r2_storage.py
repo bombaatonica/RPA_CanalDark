@@ -55,9 +55,9 @@ def upload_file(local_path, s3_key, max_retries=3):
     if not client: return False
     
     transfer_config = TransferConfig(
-        multipart_threshold=1024 * 25,     # 25MB
-        max_concurrency=10,
-        multipart_chunksize=1024 * 25,     # 25MB
+        multipart_threshold=1024 * 1024 * 15,  # 15MB
+        max_concurrency=2,                     # Reduced concurrency to avoid R2 EOF
+        multipart_chunksize=1024 * 1024 * 10,  # 10MB chunks
         use_threads=True
     )
 
@@ -68,20 +68,30 @@ def upload_file(local_path, s3_key, max_retries=3):
         except Exception as e:
             print(f"Erro ao fazer upload para R2 ({s3_key}) - tentativa {attempt + 1}/{max_retries}: {e}")
             if attempt < max_retries - 1:
-                time.sleep(5)
+                time.sleep(10) # Increased wait time before retry
             else:
                 return False
 
-def download_file(s3_key, local_path):
+def download_file(s3_key, local_path, max_retries=3):
     client = get_r2_client()
     if not client: return False
-    try:
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        client.download_file(R2_BUCKET, s3_key, local_path)
-        return True
-    except Exception as e:
-        print(f"Erro ao baixar do R2 ({s3_key}): {e}")
-        return False
+    
+    transfer_config = TransferConfig(
+        max_concurrency=2,  # Evitar que o R2 bloqueie por excesso de conexões simultâneas
+        use_threads=True
+    )
+    
+    for attempt in range(max_retries):
+        try:
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            client.download_file(R2_BUCKET, s3_key, local_path, Config=transfer_config)
+            return True
+        except Exception as e:
+            print(f"Erro ao baixar do R2 ({s3_key}) - tentativa {attempt + 1}/{max_retries}: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(10)
+            else:
+                return False
 
 def generate_presigned_url(s3_key, expiration=3600):
     client = get_r2_client()
